@@ -20,4 +20,8 @@ INDEFINITE_NPS = {k:k for k in INDEFINITE_NPS}
 # shorten to one word for meta language 
 INDEFINITE_NPS['pair of binoculars'] = 'binoculars'
 
+# just for testing 
+# INDEFINITE_NPS['boy'] = ['boy', 'child']
+
+INDEFINITE_AMBIGUOUS = {"bank": ['bank_river', 'bank_money']}
 

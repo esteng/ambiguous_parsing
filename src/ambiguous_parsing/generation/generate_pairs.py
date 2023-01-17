@@ -15,6 +15,14 @@ class Template:
         self.template_list = template_list
         self.template_tags = template_tags
 
+        self.denotation_lookup = NAMES
+        self.denotation_lookup.update(INDEFINITE_NPS)
+        self.denotation_lookup.update(VPS)
+
+        for k, v in self.denotation_lookup.items():
+            if type(v) == str:
+                self.denotation_lookup[k] = [v]
+
         if len(self.template_list) != len(self.template_tags):
             raise Exception("template list and template tags must be same length")
 
@@ -42,7 +50,6 @@ class Template:
         for prod in result:
             yield tuple(prod)
 
-
     def expand_template(self):
         all_options = [x for x in self.product(*self.template_list)]
         return all_options
@@ -51,28 +58,42 @@ class Template:
         # generate iterates through template list and generates all possible combinations of strings
         all_surface = self.expand_template()
         # get LF for each surface form
-        denotation_lookup = NAMES
-        denotation_lookup.update(INDEFINITE_NPS)
-        denotation_lookup.update(VPS)
+        
 
         pairs = []
         for surface in all_surface:
-            var_bindings = {}
+            var_bindings = []
             lf_template_copy = copy.deepcopy(lf_template)
             # fill variables
             for i, token in enumerate(surface):
                 if self.template_tags[i] is not None:
                     tag = self.template_tags[i]
-                    denotation = denotation_lookup[token]
-                    var_bindings[tag] = denotation
-            filled = lf_template_copy.format(**var_bindings)
+                    denotations = self.denotation_lookup[token]
+                    # if there are multiple denotations, then we need to fill in multiple times
+                    var_bindings.append((tag, denotations))
+
+            product_of_options = [x for x in itertools.product(*[x[1] for x in var_bindings])]
+            tags = [x[0] for x in var_bindings]
+            all_var_bindings = []
+
+            for product in product_of_options:
+                binding = {}
+                for i, tok in enumerate(product):
+                    tag = tags[i]
+                    binding[tag] = tok
+                all_var_bindings.append(binding)
+
             surface = " ".join(surface)
-            data = {"surface": surface, 
-                    "lf": filled, 
-                    "unfilled_template": lf_template,
-                    "template_tags": self.template_tags, 
-                    "var_bindings": var_bindings}
-            pairs.append(data) 
+            for var_binding in all_var_bindings:
+                filled = lf_template_copy.format(**var_binding)
+
+                data = {"surface": surface, 
+                        "lf": filled, 
+                        "unfilled_template": lf_template,
+                        "template_tags": self.template_tags, 
+                        "var_bindings": var_binding}
+                pairs.append(data) 
+
         return pairs 
 
 def generate_pp_pairs():
@@ -96,10 +117,10 @@ def generate_pp_pairs():
 
     template = Template(template, template_tags)
     first_meaning_pairs = template.generate(lf_template_1)
-    pdb.set_trace()
-    
-   
+    second_meaning_pairs = template.generate(lf_template_2)
 
+    return first_meaning_pairs + second_meaning_pairs
+    
 
 def generate_vp_pairs():
     # generate pairs of sentences and LFs with VP attachment ambiguities
