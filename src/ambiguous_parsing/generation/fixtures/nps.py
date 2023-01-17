@@ -1,5 +1,4 @@
 NAMES = ["Galileo", "Marie", "Sherlock", "Ada", "Alan", "Katherine", "Watson", "Adele", "Bill"]
-NAMES = {k:k for k in NAMES}
 
 INDEFINITE_HUMAN_NPS = ["boy", "girl", "man", "woman"]
 INDEFINITE_NONHUMAN_SENTIENT_NPS = ["bird", "cat", "dog", "fish", "cow", "elephant"]
@@ -19,6 +18,8 @@ INDEFINITE_NPS = (INDEFINITE_HUMAN_NPS +
 INDEFINITE_NPS = {k:k for k in INDEFINITE_NPS}
 # shorten to one word for meta language 
 INDEFINITE_NPS['pair of binoculars'] = 'binoculars'
+NPS = {k:v for k,v in INDEFINITE_NPS.items()}
+NPS.update({k:k for k in NAMES})
 
 # just for testing 
 # INDEFINITE_NPS['boy'] = ['boy', 'child']
