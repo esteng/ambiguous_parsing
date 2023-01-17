@@ -15,14 +15,16 @@ INDEFINITE_NPS = (INDEFINITE_HUMAN_NPS +
                     TACTILE_INSTRUMENT_NPS +
                     CLOTHING_NPS)
 
-INDEFINITE_NPS = {k:k for k in INDEFINITE_NPS}
+INDEFINITE_SENTIENT_NPS = INDEFINITE_NONHUMAN_SENTIENT_NPS + INDEFINITE_HUMAN_NPS
+
+INDEFINITE_NPS_MAP = {k:k for k in INDEFINITE_NPS}
 # shorten to one word for meta language 
-INDEFINITE_NPS['pair of binoculars'] = 'binoculars'
-NPS = {k:v for k,v in INDEFINITE_NPS.items()}
-NPS.update({k:k for k in NAMES})
+INDEFINITE_NPS_MAP['pair of binoculars'] = 'binoculars'
+NPS_MAP = {k:v for k,v in INDEFINITE_NPS_MAP.items()}
+NPS_MAP.update({k:k for k in NAMES})
 
 # just for testing 
 # INDEFINITE_NPS['boy'] = ['boy', 'child']
 
-INDEFINITE_AMBIGUOUS = {"bank": ['bank_river', 'bank_money']}
+INDEFINITE_AMBIGUOUS_MAP = {"bank": ['bank_river', 'bank_money']}
 
