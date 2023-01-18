@@ -57,7 +57,7 @@ def generate_with_pp_pairs(vp_list = VISUAL_VPS,
     
     indef_indef_lf_template_1 = "exists x . exists y . exists z . exists a . exists e . {np1}(x) AND {np2}(y)"+\
                     " AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {np3}(z) AND " +\
-                    " have(e) AND agent(e, y) AND patient(e, z)"
+                    "have(e) AND agent(e, y) AND patient(e, z)"
 
     indef_indef_lf_template_2 = "exists x . exists y . exists z . exists a . {np1}(x) AND {np2}(y)"+\
                     " AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND instrument(a, z)"
@@ -69,9 +69,9 @@ def generate_with_pp_pairs(vp_list = VISUAL_VPS,
     indef_def_template_tags = [None, "np1", "vp1", "np2", None, "np3"]
     indef_def_template = Template(indef_def_template_text, indef_def_template_tags)
 
-    indef_def_lf_template_1 = "exists x . exists y .  exists a . exists e . {np1}(x) AND {np3}(y)"+\
-                    " AND {vp1}(a) AND agent(a, x) AND patient(a, {np2})  AND " +\
-                    " have(e) AND agent(e, {np2}) AND patient(e, y)"
+    indef_def_lf_template_1 = "exists x . exists y . exists a . exists e . {np1}(x) AND {np3}(y)"+\
+                    " AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND " +\
+                    "have(e) AND agent(e, {np2}) AND patient(e, y)"
 
     indef_def_lf_template_2 = "exists x . exists y . exists a . {np1}(x) AND {np3}(y)"+\
                     " AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND instrument(a, y)"
@@ -86,7 +86,7 @@ def generate_with_pp_pairs(vp_list = VISUAL_VPS,
 
     def_indef_lf_template_1 = "exists x . exists y . exists a . exists e . {np2}(x) AND {np3}(y)"+\
                     " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND " +\
-                    " have(e) AND agent(e, x) AND patient(e, y)"
+                    "have(e) AND agent(e, x) AND patient(e, y)"
 
     def_indef_lf_template_2 = "exists x . exists y . exists a . {np2}(x) AND {np3}(y)"+\
                     " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND instrument(a, y)"
@@ -100,7 +100,7 @@ def generate_with_pp_pairs(vp_list = VISUAL_VPS,
 
     def_def_lf_template_1 = "exists x . exists a . exists e . {np3}(x)"+\
                     " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND " +\
-                    " have(e) AND agent(e, {np2}) AND patient(e, x)"
+                    "have(e) AND agent(e, {np2}) AND patient(e, x)"
 
     def_def_lf_template_2 = "exists x . exists a . {np3}(x)"+\
                     " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND instrument(a, x)"
@@ -124,7 +124,7 @@ def generate_conjunction_pairs():
     and_first_template = Template(and_first_template_text, and_first_template_tags)
 
     and_first_lf_template_1 = "exists x . exists a . exists e . exists i . {np1}(x) AND {vp1}(a) AND agent(a, x) AND ( ( {vp2}(e) AND agent(e, x) ) OR ( {vp3}(i) AND agent(i, x) ) )"
-    and_first_lf_template_2 = "exists x . exists a . exists e . exists i . ( {np1}(x) AND {vp1}(a) AND agent(a, x) AND {vp2}(e) AND agent(e, x) ) OR ( {vp3}(i) AND agent(i, x) ) )"
+    and_first_lf_template_2 = "exists x . exists a . exists e . exists i . ( {np1}(x) AND {vp1}(a) AND agent(a, x) AND {vp2}(e) AND agent(e, x) ) OR ( {vp3}(i) AND agent(i, x) )"
 
     pairs += and_first_template.generate(and_first_lf_template_1)
     pairs += and_first_template.generate(and_first_lf_template_2)
@@ -135,7 +135,7 @@ def generate_conjunction_pairs():
     or_first_template = Template(or_first_template_text, or_first_template_tags)
 
     or_first_lf_template_1 = "exists x . exists a . exists e . exists i . ( ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) ) ) AND {vp3}(i) AND agent(i, x)" 
-    or_first_lf_template_2 = "exists x . exists a . exists e . exists i . ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) AND {vp3}(i) AND agent(i, x) ) "
+    or_first_lf_template_2 = "exists x . exists a . exists e . exists i . ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) AND {vp3}(i) AND agent(i, x) )"
 
     pairs += or_first_template.generate(or_first_lf_template_1)
     pairs += or_first_template.generate(or_first_lf_template_2)
@@ -211,7 +211,7 @@ def generate_unambiguous():
     indef_intransitive_lf_template = "exists x . exists a . {np1}(x) AND {vp1}(a) AND agent(a, x)"
     pairs += indef_intransitive_template.generate(indef_intransitive_lf_template)
 
-    def_intransitive_text = [INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS]
+    def_intransitive_text = [NAMES, INTRANSITIVE_VPS]
     def_intransitive_tags = ['np1', 'vp1']
     def_intransitive_template = Template(def_intransitive_text, def_intransitive_tags)
     def_intransitive_lf_template = "exists a . {vp1}(a) AND agent(a, {np1})"
@@ -223,7 +223,7 @@ def generate_unambiguous():
     conj_indef_intransitive_lf_template = "exists x . exists a . exists e . {np1}(x) AND {vp1}(a) AND agent(a, x) AND {vp2}(e) AND agent(e, x)"
     pairs += conj_indef_intransitive_template.generate(conj_indef_intransitive_lf_template)
 
-    conj_def_intransitive_text = [INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS, "and", INTRANSITIVE_VPS]
+    conj_def_intransitive_text = [NAMES, INTRANSITIVE_VPS, "and", INTRANSITIVE_VPS]
     conj_def_intransitive_tags = ['np1', 'vp1', None, "vp2"]
     conj_def_intransitive_template = Template(conj_def_intransitive_text, conj_def_intransitive_tags)
     conj_def_intransitive_lf_template = "exists a . exists e . {vp1}(a) AND agent(a, {np1}) AND {vp2}(e) AND agent(e, {np1})"
@@ -235,7 +235,7 @@ def generate_unambiguous():
     disj_indef_intransitive_lf_template = "exists x . exists a . exists e . ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) )"
     pairs += disj_indef_intransitive_template.generate(disj_indef_intransitive_lf_template)
 
-    disj_def_intransitive_text = [INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS, "or", INTRANSITIVE_VPS]
+    disj_def_intransitive_text = [NAMES, INTRANSITIVE_VPS, "or", INTRANSITIVE_VPS]
     disj_def_intransitive_tags = ['np1', 'vp1', None, "vp2"]
     disj_def_intransitive_template = Template(disj_def_intransitive_text, disj_def_intransitive_tags)
     disj_def_intransitive_lf_template = "exists a . exists e . ( {vp1}(a) AND agent(a, {np1}) ) OR ( {vp2}(e) AND agent(e, {np1}) )"
