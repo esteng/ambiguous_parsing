@@ -1,0 +1,6 @@
+[submodule "ambiguous_parsing/third_party"]
+	path = ambiguous_parsing/third_party
+	url = git@github.com:esteng/semantic_parsing_with_constrained_lm.git
+[submodule "third_party"]
+	path = third_party
+	url = git@github.com:esteng/semantic_parsing_with_constrained_lm.git
