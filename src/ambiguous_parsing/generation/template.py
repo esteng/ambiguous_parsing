@@ -50,7 +50,7 @@ class Template:
         all_options = [x for x in self.product(*self.template_list)]
         return all_options
 
-    def generate(self, lf_template, template_idx):
+    def generate(self, lf_template, template_idx, amb_type):
         # generate iterates through template list and generates all possible combinations of strings
         all_surface = self.expand_template()
         # get LF for each surface form
@@ -87,7 +87,8 @@ class Template:
                         "unfilled_template": lf_template,
                         "template_tags": self.template_tags, 
                         "var_bindings": var_binding,
-                        "template_idx": template_idx}
+                        "template_idx": template_idx,
+                        "type": amb_type}
                 pairs.append(data) 
 
         return pairs 
