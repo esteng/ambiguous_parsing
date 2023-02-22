@@ -7,7 +7,12 @@ from ambiguous_parsing.generation.fixtures.nps import (
     INDEFINITE_NPS,
     INDEFINITE_HUMAN_NPS, 
     NAMES, 
+    MALE_NAMES,
+    FEMALE_NAMES,
+    INDEFINITE_MALE_NPS,
+    INDEFINITE_FEMALE_NPS,
     VISUAL_INSTRUMENT_NPS, 
+    NONVISUAL_NPS,
     TACTILE_INSTRUMENT_NPS,
     INDEFINITE_SENTIENT_NPS
 )
@@ -16,6 +21,7 @@ from ambiguous_parsing.generation.fixtures.vps import (
     TACTILE_VPS, 
     INTRANSITIVE_VPS,
     TRANSITIVE_VPS,
+    INTRANSITIVE_VPS_FOR_BOUND,
     VPS
 )
 from ambiguous_parsing.generation.template import Template
@@ -59,26 +65,27 @@ def generate_with_pp_pairs(vp_list = VISUAL_VPS,
                     " AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {np3}(z) AND " +\
                     "have(e) AND agent(e, y) AND patient(e, z)"
 
-    indef_indef_lf_template_2 = "exists x . exists y . exists z . exists a . {np1}(x) AND {np2}(y)"+\
+    indef_indef_lf_template_2 = "exists x . exists y . exists z . exists a . {np1}(x) AND {np2}(y) AND {np3}(z)"+\
                     " AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND instrument(a, z)"
 
     pairs += indef_indef_template.generate(indef_indef_lf_template_1, 0, "pp")
     pairs += indef_indef_template.generate(indef_indef_lf_template_2, 1, "pp")
 
-    indef_def_template_text = ["the", INDEFINITE_HUMAN_NPS, vp_list, NAMES, pp_str, pp_np_list]
-    indef_def_template_tags = [None, "np1", "vp1", "np2", None, "np3"]
-    indef_def_template = Template(indef_def_template_text, indef_def_template_tags)
+    # no good for tactile, not ambiguous 
+    if pp_np_list == VISUAL_INSTRUMENT_NPS:
+        indef_def_template_text = ["the", INDEFINITE_HUMAN_NPS, vp_list, NAMES, pp_str, pp_np_list]
+        indef_def_template_tags = [None, "np1", "vp1", "np2", None, "np3"]
+        indef_def_template = Template(indef_def_template_text, indef_def_template_tags)
 
-    indef_def_lf_template_1 = "exists x . exists y . exists a . exists e . {np1}(x) AND {np3}(y)"+\
-                    " AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND " +\
-                    "have(e) AND agent(e, {np2}) AND patient(e, y)"
+        indef_def_lf_template_1 = "exists x . exists y . exists a . exists e . {np1}(x) AND {np3}(y)"+\
+                        " AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND " +\
+                        "have(e) AND agent(e, {np2}) AND patient(e, y)"
 
-    indef_def_lf_template_2 = "exists x . exists y . exists a . {np1}(x) AND {np3}(y)"+\
-                    " AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND instrument(a, y)"
+        indef_def_lf_template_2 = "exists x . exists y . exists a . {np1}(x) AND {np3}(y)"+\
+                        " AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND instrument(a, y)"
 
-    pairs += indef_def_template.generate(indef_def_lf_template_1, 0, "pp")
-    pairs += indef_def_template.generate(indef_def_lf_template_2, 1, "pp")
-
+        pairs += indef_def_template.generate(indef_def_lf_template_1, 0, "pp")
+        pairs += indef_def_template.generate(indef_def_lf_template_2, 1, "pp")
 
     def_indef_template_text = [NAMES, vp_list, "the", INDEFINITE_HUMAN_NPS,  pp_str, pp_np_list]
     def_indef_template_tags = ["np1", "vp1", None, "np2", None, "np3"]
@@ -94,22 +101,54 @@ def generate_with_pp_pairs(vp_list = VISUAL_VPS,
     pairs += def_indef_template.generate(def_indef_lf_template_1, 0, "pp")
     pairs += def_indef_template.generate(def_indef_lf_template_2, 1, "pp")
 
-    def_def_template_text = [NAMES, vp_list, NAMES,  pp_str, pp_np_list]
-    def_def_template_tags = ["np1", "vp1", "np2", None, "np3"]
-    def_def_template = Template(def_def_template_text, def_def_template_tags) 
 
-    def_def_lf_template_1 = "exists x . exists a . exists e . {np3}(x)"+\
-                    " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND " +\
-                    "have(e) AND agent(e, {np2}) AND patient(e, x)"
+    # no good for tactile, not ambiguous
+    if pp_np_list == VISUAL_INSTRUMENT_NPS:
+        def_def_template_text = [NAMES, vp_list, NAMES,  pp_str, pp_np_list]
+        def_def_template_tags = ["np1", "vp1", "np2", None, "np3"]
+        def_def_template = Template(def_def_template_text, def_def_template_tags) 
 
-    def_def_lf_template_2 = "exists x . exists a . {np3}(x)"+\
-                    " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND instrument(a, x)"
+        def_def_lf_template_1 = "exists x . exists a . exists e . {np3}(x)"+\
+                        " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND " +\
+                        "have(e) AND agent(e, {np2}) AND patient(e, x)"
 
-    pairs += def_def_template.generate(def_def_lf_template_1, 0, "pp")
-    pairs += def_def_template.generate(def_def_lf_template_2, 1, "pp")
+        def_def_lf_template_2 = "exists x . exists a . {np3}(x)"+\
+                        " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND instrument(a, x)"
+
+        pairs += def_def_template.generate(def_def_lf_template_1, 0, "pp")
+        pairs += def_def_template.generate(def_def_lf_template_2, 1, "pp")
 
     return pairs
+
+def generate_unambiguous_pp(): 
+    """ generate unambiguous PP sentences
+    like "The man saw the boy with the mittens" 
+    "The woman saw the man with the pyjamas" 
+    """
+    pairs = []
     
+    # visual templates 
+    indef_indef_template_text = ["the", INDEFINITE_HUMAN_NPS, VISUAL_VPS, "the", INDEFINITE_HUMAN_NPS, "with the", NONVISUAL_NPS]
+    indef_indef_template_tags = [None, "np1", "vp1", None, "np2", None, "np3"]
+    indef_indef_template = Template(indef_indef_template_text, indef_indef_template_tags)
+    
+    indef_indef_lf_template_1 = "exists x . exists y . exists z . exists a . exists e . {np1}(x) AND {np2}(y)"+\
+                    " AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {np3}(z) AND " +\
+                    "have(e) AND agent(e, y) AND patient(e, z)"
+
+    pairs += indef_indef_template.generate(indef_indef_lf_template_1, 0, "pp_unambig")
+
+    def_indef_template_text = [NAMES, VISUAL_VPS, "the", INDEFINITE_HUMAN_NPS,  "with the", NONVISUAL_NPS]
+    def_indef_template_tags = ["np1", "vp1", None, "np2", None, "np3"]
+    def_indef_template = Template(def_indef_template_text, def_indef_template_tags) 
+
+    def_indef_lf_template_1 = "exists x . exists y . exists a . exists e . {np2}(x) AND {np3}(y)"+\
+                    " AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND " +\
+                    "have(e) AND agent(e, x) AND patient(e, y)"
+
+    pairs += def_indef_template.generate(def_indef_lf_template_1, 0, "pp_unambig")
+
+    return pairs  
 
 def generate_conjunction_pairs():
     """generate pairs of sentences with conjunction ambiguities
@@ -119,7 +158,7 @@ def generate_conjunction_pairs():
         exists x . exists a . exists e . exists i . ( man(x) AND eat(a) AND agent(a, x) AND drank(e) AND agent(e, x) ) OR ( slept(i) AND agent(i, x) ) )
     """
     pairs = []
-    and_first_template_text = ["the", INDEFINITE_NPS, INTRANSITIVE_VPS, "and", INTRANSITIVE_VPS, "or", INTRANSITIVE_VPS]
+    and_first_template_text = ["the", INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS, "and", INTRANSITIVE_VPS, "or", INTRANSITIVE_VPS]
     and_first_template_tags = [None, "np1", "vp1", None, "vp2", None, "vp3"] 
     and_first_template = Template(and_first_template_text, and_first_template_tags)
 
@@ -129,7 +168,7 @@ def generate_conjunction_pairs():
     pairs += and_first_template.generate(and_first_lf_template_1, 0, "conj")
     pairs += and_first_template.generate(and_first_lf_template_2, 1, "conj")
 
-    or_first_template_text = ['the', INDEFINITE_NPS, INTRANSITIVE_VPS, 'or', INTRANSITIVE_VPS, 'and', INTRANSITIVE_VPS]
+    or_first_template_text = ['the', INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS, 'or', INTRANSITIVE_VPS, 'and', INTRANSITIVE_VPS]
     or_first_template_tags = [None, 'np1', 'vp1', None, 'vp2', None, 'vp3']
 
     or_first_template = Template(or_first_template_text, or_first_template_tags)
@@ -151,7 +190,7 @@ def generate_scope_pairs():
     """
     pairs = []
     
-    every_template_text = ["every", INDEFINITE_SENTIENT_NPS, VPS, "a", INDEFINITE_NPS]
+    every_template_text = ["every", INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, "a", INDEFINITE_NPS]
     every_template_tags = [None, "np1", "vp1", None, "np2"]
     every_template = Template(every_template_text, every_template_tags)
     
@@ -161,7 +200,7 @@ def generate_scope_pairs():
     pairs += every_template.generate(lf_template_1, 0, "scope")
     pairs += every_template.generate(lf_template_2, 1, "scope")
 
-    each_template_text = ["each", INDEFINITE_SENTIENT_NPS, VPS, "a", INDEFINITE_NPS]
+    each_template_text = ["each", INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, "a", INDEFINITE_NPS]
     each_template_tags = [None, "np1", "vp1", None, "np2"]
     each_template = Template(each_template_text, each_template_tags)
 
@@ -170,15 +209,210 @@ def generate_scope_pairs():
 
     return pairs 
 
-def generate_unambiguous():
+def generate_reverse_scope_pairs():
+    """generate pairs of sentences and LFs with scope ambiguities but with quants at the end
+    of the form
+    "a man heard every bird"
+        exists x . forall y . exists a . man(y) AND bird(x) AND hear(a) AND agent(a, y) AND patient(a, x) 
+        forall x . exists y . exists a . man(x) AND bird(y) AND hear(a) AND agent(a, x) AND patient(a, y)
+    """
+    pairs = []
+    
+    # every_template_text = ["every", INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, "a", INDEFINITE_NPS]
+    every_template_text = ["a", INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, "every", INDEFINITE_NPS]
+    every_template_tags = [None, "np1", "vp1", None, "np2"]
+    every_template = Template(every_template_text, every_template_tags)
+    
+    lf_template_1 = "exists x . forall y . exists a . {np1}(x) AND {np2}(y) AND {vp1}(a) AND agent(a, x) AND patient(a, y)"
+    lf_template_2 = "forall x . exists y . exists a . {np1}(y) AND {np2}(x) AND {vp1}(a) AND agent(a, y) AND patient(a, x)"
+    
+    pairs += every_template.generate(lf_template_1, 0, "scope_reverse")
+    pairs += every_template.generate(lf_template_2, 1, "scope_reverse")
+
+    # each_template_text = ["each", INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, "a", INDEFINITE_NPS]
+    each_template_text = ["a", INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, "each", INDEFINITE_NPS]
+    each_template_tags = [None, "np1", "vp1", None, "np2"]
+    each_template = Template(each_template_text, each_template_tags)
+
+    pairs += each_template.generate(lf_template_1, 0, "scope_reverse")
+    pairs += each_template.generate(lf_template_2, 1, "scope_reverse")
+
+    return pairs 
+
+def generate_unambiguous_scope():
+    """
+    generate unambiguous scope sentences  
+    e.g. "every man walks" 
+    "each person sees the dog"
+    """
+    pairs = []
+
+    every_trans_template_text = ["every", INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, "the", INDEFINITE_NPS]
+    every_trans_template_tags = [None, "np1", "vp1", None, "np2"]
+    every_trans_template = Template(every_trans_template_text, every_trans_template_tags)
+    trans_lf_template = "exists x . forall y . exists a . {np1}(y) AND {np2}(x) AND {vp1}(a) AND agent(a, y) AND patient(a, x)"
+    pairs += every_trans_template.generate(trans_lf_template, 0, "scope_unambig")
+
+    each_trans_template_text = ["each", INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, "the", INDEFINITE_NPS]
+    each_trans_template_tags = [None, "np1", "vp1", None, "np2"]
+    each_trans_template = Template(each_trans_template_text, each_trans_template_tags)
+    pairs += each_trans_template.generate(trans_lf_template, 0, "scope_unambig")
+
+    every_intrans_template_text = ["every", INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS]
+    every_intrans_template_tags = [None, "np1", "vp1"]
+    every_intrans_template = Template(every_intrans_template_text, every_intrans_template_tags)
+    intrans_lf_template = "exists x . forall y . exists a . {np1}(y) {vp1}(a) AND agent(a, y)"
+    pairs += every_intrans_template.generate(intrans_lf_template, 0, "scope_unambig")
+    
+    each_intrans_template_text = ["each", INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS]
+    each_intrans_template_tags = [None, "np1", "vp1"]
+    each_intrans_template = Template(each_intrans_template_text, each_intrans_template_tags)
+    pairs += each_intrans_template.generate(intrans_lf_template, 0, "scope_unambig")
+
+    # TODO: add pairs here where the scope is unambiguous and there are two quantifiers 
+
+    return pairs 
+
+
+def generate_bound_pronoun_pairs(is_female=True):
+    """
+    generate ambiguous pairs with bound gendered pronouns 
+    i.e. 
+    "Bill saw John and he waved"
+    "The woman observed Mary and she lept"
+    """
+    pairs = []
+
+    if is_female:
+        name_choices = FEMALE_NAMES
+        indef_choices = INDEFINITE_FEMALE_NPS
+        conj_statement = "and she"
+    else:
+        name_choices = MALE_NAMES
+        indef_choices = INDEFINITE_MALE_NPS
+        conj_statement = "and he"
+
+    def_def_template_text = [name_choices, VISUAL_VPS, name_choices, conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    def_def_template_tags = ["np1", "vp1", "np2", None, "vp2"]
+    def_def_template = Template(def_def_template_text, def_def_template_tags)
+    def_def_lf_template_1  = "exists a . exists e . {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND {vp2}(e) AND agent(e, {np1})"
+    def_def_lf_template_2  = "exists a . exists e . {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND {vp2}(e) AND agent(e, {np2})"
+
+    pairs += def_def_template.generate(def_def_lf_template_1, 0, "bound")
+    pairs += def_def_template.generate(def_def_lf_template_2, 1, "bound") 
+
+
+    indef_def_template_text = ["the", indef_choices, VISUAL_VPS, name_choices, conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    indef_def_template_tags = [None, "np1", "vp1", "np2", None, "vp2"]
+    indef_def_template = Template(indef_def_template_text, indef_def_template_tags)
+    indef_def_lf_template_1  = "exists x . exists a . exists e . {np1}(x) AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND {vp2}(e) AND agent(e, x)"
+    indef_def_lf_template_2  = "exists x . exists a . exists e . {np1}(x) AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND {vp2}(e) AND agent(e, {np2})"
+
+    pairs += indef_def_template.generate(indef_def_lf_template_1, 0, "bound")
+    pairs += indef_def_template.generate(indef_def_lf_template_2, 1, "bound")
+
+    def_indef_template_text = [name_choices, VISUAL_VPS, "the", indef_choices, conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    def_indef_template_tags = ["np1", "vp1", None, "np2", None, "vp2"]
+    def_indef_template = Template(def_indef_template_text, def_indef_template_tags)
+    def_indef_lf_template_1  = "exists x . exists a . exists e . {np2}(x) AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND {vp2}(e) AND agent(e, {np1})"
+    def_indef_lf_template_2  = "exists x . exists a . exists e . {np2}(x) AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND {vp2}(e) AND agent(e, x)"
+
+    pairs += def_indef_template.generate(def_indef_lf_template_1, "0", "bound")
+    pairs += def_indef_template.generate(def_indef_lf_template_2, "1", "bound")
+
+    indef_indef_template_text = ["the", indef_choices, VISUAL_VPS, "the", indef_choices, conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    indef_indef_template_tags = [None, "np1", "vp1", None, "np2", None, "vp2"]
+    indef_indef_template = Template(indef_indef_template_text, indef_indef_template_tags)
+    indef_indef_lf_template_1  = "exists x . exists y . exists a . exists e . {np1}(x) AND {np2}(y) AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {vp2}(e) AND agent(e, x)"
+    indef_indef_lf_template_2  = "exists x . exists y . exists a . exists e . {np1}(x) AND {np2}(y) AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {vp2}(e) AND agent(e, y)"
+
+    pairs += indef_indef_template.generate(indef_indef_lf_template_1, "0", "bound")
+    pairs += indef_indef_template.generate(indef_indef_lf_template_2, "1", "bound")
+
+    return pairs 
+
+def generate_unambigous_bound_pronoun(is_female=True):
+    """
+    generate unambiguous pairs with bound gendered pronouns 
+    i.e. 
+    "Bill saw Mary and he waved"
+    "The woman observed John and he lept"
+    """
+
+    pairs = []
+
+    if is_female:
+        subj_name_choices = FEMALE_NAMES
+        subj_indef_choices = INDEFINITE_FEMALE_NPS
+        obj_name_choices = MALE_NAMES
+        obj_indef_choices = INDEFINITE_MALE_NPS
+        subj_conj_statement = "and she"
+        obj_conj_statement = "and he"
+    else:
+        subj_name_choices = MALE_NAMES
+        subj_indef_choices = INDEFINITE_MALE_NPS
+        obj_name_choices = FEMALE_NAMES
+        obj_indef_choices = INDEFINITE_FEMALE_NPS
+        subj_conj_statement = "and he"
+        obj_conj_statement = "and she"
+
+    def_def_subj_template_text = [subj_name_choices, VISUAL_VPS, obj_name_choices, subj_conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    def_def_subj_template_tags = ["np1", "vp1", "np2", None, "vp2"]
+    def_def_subj_template = Template(def_def_subj_template_text, def_def_subj_template_tags)
+    def_def_subj_lf_template  = "exists a . exists e . {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND {vp2}(e) AND agent(e, {np1})"
+    pairs += def_def_subj_template.generate(def_def_subj_lf_template, 0, "bound_unambig")
+
+    def_def_obj_template_text = [subj_name_choices, VISUAL_VPS, obj_name_choices, obj_conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    def_def_obj_template_tags = ["np1", "vp1", "np2", None, "vp2"]
+    def_def_obj_template = Template(def_def_obj_template_text, def_def_obj_template_tags)
+    def_def_obj_lf_template  = "exists a . exists e . {vp1}(a) AND agent(a, {np1}) AND patient(a, {np2}) AND {vp2}(e) AND agent(e, {np2})"
+    pairs += def_def_obj_template.generate(def_def_obj_lf_template, 0, "bound_unambig")
+
+
+    indef_def_subj_template_text = ["the", subj_indef_choices, VISUAL_VPS, obj_name_choices, subj_conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    indef_def_subj_template_tags = [None, "np1", "vp1", "np2", None, "vp2"]
+    indef_def_subj_template = Template(indef_def_subj_template_text, indef_def_subj_template_tags)
+    indef_def_subj_lf_template  = "exists x . exists a . exists e . {np1}(x) AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND {vp2}(e) AND agent(e, x)"
+    pairs += indef_def_subj_template.generate(indef_def_subj_lf_template, 0, "bound_unambig") 
+
+    indef_def_obj_template_text = ["the", subj_indef_choices, VISUAL_VPS, obj_name_choices, obj_conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    indef_def_obj_template_tags = [None, "np1", "vp1", "np2", None, "vp2"]
+    indef_def_obj_template = Template(indef_def_obj_template_text, indef_def_obj_template_tags)
+    indef_def_obj_lf_template  = "exists x . exists a . exists e . {np1}(x) AND {vp1}(a) AND agent(a, x) AND patient(a, {np2}) AND {vp2}(e) AND agent(e, {np2})"
+    pairs += indef_def_obj_template.generate(indef_def_obj_lf_template, 0, "bound_unambig")
+
+    def_indef_subj_template_text = [subj_name_choices, VISUAL_VPS, "the", obj_indef_choices, subj_conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    def_indef_subj_template_tags = ["np1", "vp1", None, "np2", None, "vp2"]
+    def_indef_subj_template = Template(def_indef_subj_template_text, def_indef_subj_template_tags)
+    def_indef_subj_lf_template  = "exists x . exists a . exists e . {np2}(x) AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND {vp2}(e) AND agent(e, {np1})"
+    pairs += def_indef_subj_template.generate(def_indef_subj_lf_template, 0, "bound_unambig")
+
+    def_indef_obj_template_text = [subj_name_choices, VISUAL_VPS, "the", obj_indef_choices, obj_conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    def_indef_obj_template_tags = ["np1", "vp1", None, "np2", None, "vp2"]
+    def_indef_obj_template = Template(def_indef_obj_template_text, def_indef_obj_template_tags)
+    def_indef_obj_lf_template = "exists x . exists a . exists e . {np2}(x) AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND {vp2}(e) AND agent(e, x)"
+    pairs += def_indef_obj_template.generate(def_indef_obj_lf_template, 0, "bound_unambig")
+
+    indef_indef_subj_template_text = ["the", subj_indef_choices, VISUAL_VPS, "the", obj_indef_choices, subj_conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    indef_indef_subj_template_tags = [None, "np1", "vp1", None, "np2", None, "vp2"]
+    indef_indef_subj_template = Template(indef_indef_subj_template_text, indef_indef_subj_template_tags)
+    indef_indef_subj_lf_template  = "exists x . exists y . exists a . exists e . {np1}(x) AND {np2}(y) AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {vp2}(e) AND agent(e, x)"
+    pairs += indef_indef_subj_template.generate(indef_indef_subj_lf_template, 0, "bound_unambig")
+
+    indef_indef_obj_template_text = ["the", subj_indef_choices, VISUAL_VPS, "the", obj_indef_choices, obj_conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
+    indef_indef_obj_template_tags = [None, "np1", "vp1", None, "np2", None, "vp2"]
+    indef_indef_obj_template = Template(indef_indef_obj_template_text, indef_indef_obj_template_tags)
+    indef_indef_obj_lf_template  = "exists x . exists y . exists a . exists e . {np1}(x) AND {np2}(y) AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {vp2}(e) AND agent(e, y)"
+    pairs += indef_indef_obj_template.generate(indef_indef_obj_lf_template, 0, "bound_unambig")
+
+    return pairs 
+
+def generate_unambiguous_basic():
     """
     generate unambiguous sentences
     of the form:
     "The man saw the boy"
     "The man walked"
-    and maybe also: 
-    "The man saw the boy and the girl"
-    "The man walked and ate
     """
     pairs = []
     indef_indef_transitive_text = ['the', INDEFINITE_SENTIENT_NPS, TRANSITIVE_VPS, 'the', INDEFINITE_NPS]
@@ -217,6 +451,14 @@ def generate_unambiguous():
     def_intransitive_lf_template = "exists a . {vp1}(a) AND agent(a, {np1})"
     pairs += def_intransitive_template.generate(def_intransitive_lf_template, 0, "unambig")
 
+    return pairs 
+
+def generate_unambiguous_conj():
+    """Generate unambigous examples with conjunctions and disjunctions
+    "The man walked or ate"
+    """
+    pairs = []
+
     conj_indef_intransitive_text = ['the', INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS, "and", INTRANSITIVE_VPS]
     conj_indef_intransitive_tags = [None, 'np1', 'vp1', None, "vp2"]
     conj_indef_intransitive_template = Template(conj_indef_intransitive_text, conj_indef_intransitive_tags)
@@ -241,11 +483,30 @@ def generate_unambiguous():
     disj_def_intransitive_lf_template = "exists a . exists e . ( {vp1}(a) AND agent(a, {np1}) ) OR ( {vp2}(e) AND agent(e, {np1}) )"
     pairs += disj_def_intransitive_template.generate(disj_def_intransitive_lf_template, 0, "unambig")
 
-    return pairs    
+    return pairs   
+
 
 if __name__ == "__main__":
-    # generate_pp_pairs()
-    # generate_scope_pairs()
-    # generate_conjunction_pairs()
-    unambiguous = generate_unambiguous()
+    pp_pairs = generate_pp_pairs()
+    unambig_pp = generate_unambiguous_pp()
+
+    scope_pairs = generate_scope_pairs()
+    reverse_scope_pairs = generate_reverse_scope_pairs()
+    unambig_scope = generate_unambiguous_scope()
+
+    conj_pairs = generate_conjunction_pairs()
+    unambig_conj = generate_unambiguous_conj()
+
+    bound_pairs = generate_bound_pronoun_pairs(is_female=True)+\
+                generate_bound_pronoun_pairs(is_female=False)
+    unambig_bound = generate_unambigous_bound_pronoun(is_female=True) + \
+                    generate_unambigous_bound_pronoun(is_female=False)
+
+    unambiguous = generate_unambiguous_basic()
+
+    all_data = pp_pairs + unambig_pp + \
+               scope_pairs + reverse_scope_pairs + unambig_scope + \
+                conj_pairs + unambig_conj + \
+                bound_pairs + unambig_bound + \
+                unambiguous
     pdb.set_trace()

@@ -1,0 +1,1 @@
+TYPE_KEYS = ['pp', 'conj', 'bound', 'scope', 'revscope', 'unambig']
