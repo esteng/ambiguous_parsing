@@ -1,0 +1,25 @@
+sampler: paired
+out_dir: 'TODO: override'
+train_n: 5000
+perc_ambig: 10
+train_perc_pp: 0.1
+train_perc_conj: 0.1
+train_perc_scope: 0.1
+train_perc_unambiguous: 0.7
+dev_num_pp: 30
+dev_num_conj: 30
+dev_num_scope: 30
+dev_num_unambiguous: 10
+test_num_pp: 60
+test_num_conj: 60
+test_num_scope: 60
+test_num_unambiguous: 20
+train_pp_ratio: 0.5
+train_conj_ratio: 0.5
+train_scope_ratio: 0.5
+dev_pp_ratio: 0.5
+dev_conj_ratio: 0.5
+dev_scope_ratio: 0.5
+test_pp_ratio: 0.5
+test_conj_ratio: 0.5
+test_scope_ratio: 0.5
