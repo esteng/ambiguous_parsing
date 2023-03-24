@@ -1,3 +1,4 @@
 *.pyc
 *.swo
 *.swe
+src/outputs
