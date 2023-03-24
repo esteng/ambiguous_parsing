@@ -317,8 +317,8 @@ def generate_bound_pronoun_pairs(is_female=True):
     def_indef_lf_template_1  = "exists x . exists a . exists e . {np2}(x) AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND {vp2}(e) AND agent(e, {np1})"
     def_indef_lf_template_2  = "exists x . exists a . exists e . {np2}(x) AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x) AND {vp2}(e) AND agent(e, x)"
 
-    pairs += def_indef_template.generate(def_indef_lf_template_1, "0", "bound")
-    pairs += def_indef_template.generate(def_indef_lf_template_2, "1", "bound")
+    pairs += def_indef_template.generate(def_indef_lf_template_1, 0, "bound")
+    pairs += def_indef_template.generate(def_indef_lf_template_2, 1, "bound")
 
     indef_indef_template_text = ["the", indef_choices, VISUAL_VPS, "the", indef_choices, conj_statement, INTRANSITIVE_VPS_FOR_BOUND]
     indef_indef_template_tags = [None, "np1", "vp1", None, "np2", None, "vp2"]
@@ -326,8 +326,8 @@ def generate_bound_pronoun_pairs(is_female=True):
     indef_indef_lf_template_1  = "exists x . exists y . exists a . exists e . {np1}(x) AND {np2}(y) AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {vp2}(e) AND agent(e, x)"
     indef_indef_lf_template_2  = "exists x . exists y . exists a . exists e . {np1}(x) AND {np2}(y) AND {vp1}(a) AND agent(a, x) AND patient(a, y) AND {vp2}(e) AND agent(e, y)"
 
-    pairs += indef_indef_template.generate(indef_indef_lf_template_1, "0", "bound")
-    pairs += indef_indef_template.generate(indef_indef_lf_template_2, "1", "bound")
+    pairs += indef_indef_template.generate(indef_indef_lf_template_1, 0, "bound")
+    pairs += indef_indef_template.generate(indef_indef_lf_template_2, 1, "bound")
 
     return pairs 
 

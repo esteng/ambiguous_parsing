@@ -2,7 +2,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import json 
 import pdb 
-import pathlib 
+from pathlib import Path
 from collections import defaultdict 
 from typing import List, Dict, Any
 
@@ -121,9 +121,14 @@ class PairedSampler:
               ambig_nums_per_type: Dict[str, int],
               unambig_nums_per_type: Dict[str, int],
               ratio_dict: Dict[str, float]):
+
         all_samples = []
         # make sure that for each ambiguous example, the pair is in the same split 
         for type_key in TYPE_KEYS: 
+            if type_key == "unambig":
+                # unambig data isn't paired 
+                continue
+
             n_unambig = unambig_nums_per_type[type_key]
             # for unambiguous 
             unambig_pairs = unambig_data[type_key]
@@ -280,8 +285,13 @@ def main(cfg: DictConfig):
             unambig_data['dev'][k] = unambig_dev
             unambig_data['test'][k] = unambig_test
 
-            ambig_nums_per_type['train'][k] = cfg.train[f"perc_{k}"] * cfg.train[f"perc_{k}_ambig"] * cfg.train.total
-            unambig_nums_per_type['train'][k] = cfg.train[f"perc_{k}"] * cfg.train[f"perc_{k}_unambig"] * cfg.train.total
+            ambig_nums_per_type['train'][k] = int(cfg.train[f"perc_{k}"] * cfg.train[f"perc_{k}_ambig"] * cfg.train.total)
+            ambig_nums_per_type['dev'][k] = int(cfg.dev[f"perc_{k}"] * cfg.dev[f"perc_{k}_ambig"] * cfg.dev.total)
+            ambig_nums_per_type['test'][k] = int(cfg.test[f"perc_{k}"] * cfg.test[f"perc_{k}_ambig"] * cfg.test.total)
+
+            unambig_nums_per_type['train'][k] = int(cfg.train[f"perc_{k}"] * cfg.train[f"perc_{k}_unambig"] * cfg.train.total)
+            unambig_nums_per_type['dev'][k] = int(cfg.dev[f"perc_{k}"] * cfg.dev[f"perc_{k}_unambig"] * cfg.dev.total)
+            unambig_nums_per_type['test'][k] = int(cfg.test[f"perc_{k}"] * cfg.test[f"perc_{k}_unambig"] * cfg.test.total)
 
 
         unambiguous_train, unambiguous_dev, unambiguous_test = split_random(unambiguous, 
@@ -292,9 +302,9 @@ def main(cfg: DictConfig):
         unambig_data['dev']['unambiguous'] = unambiguous_dev
         unambig_data['test']['unambiguous'] = unambiguous_test
         
-        unambig_nums_per_type['train']['unambiguous'] = cfg.train.perc_unambig * cfg.train.total
-        unambig_nums_per_type['dev']['unambiguous'] = cfg.dev.perc_unambig * cfg.dev.total
-        unambig_nums_per_type['test']['unambiguous'] = cfg.test.perc_unambig * cfg.test.total
+        unambig_nums_per_type['train']['unambiguous'] = int(cfg.train.perc_unambig * cfg.train.total)
+        unambig_nums_per_type['dev']['unambiguous'] = int(cfg.dev.perc_unambig * cfg.dev.total)
+        unambig_nums_per_type['test']['unambiguous'] = int(cfg.test.perc_unambig * cfg.test.total)
 
         # then organize data 
         ratio_dict = {"train": {}, "dev": {}, "test": {}}
@@ -308,7 +318,23 @@ def main(cfg: DictConfig):
 
         # TODO: elias: pick up here 
         # right now the code is pretty ugly and repetitive and i think we're doing a lot of uncessary sampling 
-        train = sampler.sample(ambig_data['train'], unambig_data['train'], ambig_nums_per_type['train'], unambig_nums_per_type['train'], ratio_dict['train'])
+        train = sampler.sample(ambig_data['train'], 
+                                unambig_data['train'], 
+                                ambig_nums_per_type['train'], 
+                                unambig_nums_per_type['train'], 
+                                ratio_dict['train'])
+
+        dev = sampler.sample(ambig_data['dev'], 
+                                unambig_data['dev'], 
+                                ambig_nums_per_type['dev'], 
+                                unambig_nums_per_type['dev'], 
+                                ratio_dict['dev'])
+
+        test = sampler.sample(ambig_data['test'], 
+                                unambig_data['test'], 
+                                ambig_nums_per_type['test'], 
+                                unambig_nums_per_type['test'], 
+                                ratio_dict['test'])
         # dev = sampler.sample(dev_dict, dev_nums_per_type, dev_ratios_per_type)
         # test = sampler.sample(test_dict, test_nums_per_type, test_ratios_per_type)
 
@@ -316,6 +342,7 @@ def main(cfg: DictConfig):
     else:
         raise NotImplementedError(f"Sampler: {cfg.sampler} is not implemented")
 
+    cfg.out_dir = Path(cfg.out_dir)    
 
     if not cfg.out_dir.exists():
         cfg.out_dir.mkdir(parents=True)
