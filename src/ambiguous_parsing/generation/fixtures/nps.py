@@ -8,7 +8,7 @@ INDEFINITE_FEMALE_NPS = ["woman", "girl"]
 INDEFINITE_NONHUMAN_SENTIENT_NPS = ["bird", "cat", "dog", "fish", "cow", "elephant"]
 INDEFINITE_NONHUMAN_NONSENTIENT_NPS = ["book", "rock", "table", "cup", "crayon"]
 
-VISUAL_INSTRUMENT_NPS = ["telescope", "pair of binoculars", "camera", "spyglass"]
+VISUAL_INSTRUMENT_NPS = ["telescope", "binoculars", "camera", "spyglass"]
 TACTILE_INSTRUMENT_NPS = ["gloves", "mittens", "ovenmitts"]
 CLOTHING_NPS = ["pyjamas", "pants", "sweater", "hat"]
 
@@ -25,12 +25,19 @@ INDEFINITE_SENTIENT_NPS = INDEFINITE_NONHUMAN_SENTIENT_NPS + INDEFINITE_HUMAN_NP
 
 INDEFINITE_NPS_MAP = {k:k for k in INDEFINITE_NPS}
 # shorten to one word for meta language 
-INDEFINITE_NPS_MAP['pair of binoculars'] = 'binoculars'
+# INDEFINITE_NPS_MAP['pair of binoculars'] = 'binoculars'
 NPS_MAP = {k:v for k,v in INDEFINITE_NPS_MAP.items()}
 NPS_MAP.update({k:k for k in NAMES})
 
-# just for testing 
-# INDEFINITE_NPS['boy'] = ['boy', 'child']
+# INDEFINITE_AMBIGUOUS_MAP = {"bank": ['bank_river', 'bank_money']}
 
-INDEFINITE_AMBIGUOUS_MAP = {"bank": ['bank_river', 'bank_money']}
+PLURAL_NP_TO_SINGULAR = {"pyjamas": "set of pyjamas",
+                        "pants": "pair of pants",
+                        "binoculars": "pair of binoculars",
+                        "mittens": "pair of mittens",
+                        "ovenmitts": "pair of ovenmitts",
+                        "gloves": "pair of gloves"}
 
+# LF has plural forms even for singular nouns 
+for p, s in PLURAL_NP_TO_SINGULAR.items():
+  INDEFINITE_NPS_MAP[s] = p

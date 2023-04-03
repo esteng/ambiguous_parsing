@@ -1,4 +1,5 @@
 import hydra
+import re
 from omegaconf import DictConfig, OmegaConf
 import json 
 import pdb 
@@ -72,7 +73,7 @@ class RandomSampler:
             np.random.shuffle(test)
         return train, dev, test
 
-class PairedSampler:
+class RatioSampler:
     def __init__(self, 
                  cfg: DictConfig):
         self.cfg = cfg 
@@ -102,16 +103,27 @@ class PairedSampler:
             return None
 
         cand_indicies = [i for i in range(len(sampled_ex_by_template))]
-        samples_for_template_0_indices = np.random.choice(cand_indicies, n_template_0, replace=False)
-        samples_for_template_1_indices = np.random.choice(cand_indicies, n_template_1, replace=False)
+        samples_for_template_0_indices, samples_for_template_1_indices = [], []
+        prob_zero = n_template_0 / (n_template_0 + n_template_1)
+        prob_one = 1 - prob_zero
+        for cidx in cand_indicies:
+            coinflip = np.random.choice([0, 1], p=[prob_zero, prob_one])
+            if coinflip == 0:
+                samples_for_template_0_indices.append(cidx)
+            else:
+                samples_for_template_1_indices.append(cidx)
+        # instead of this, model as a coinflip so that idxs are exclusive and one index doesn't get to choose first
+        # samples_for_template_0_indices = np.random.choice(cand_indicies, n_template_0, replace=False)
+        # samples_for_template_1_indices = np.random.choice(cand_indicies, n_template_1, replace=False)
 
         final_samples = []
         for temp_0_idx in samples_for_template_0_indices:
             ex = sampled_ex_by_template[temp_0_idx][0]
             final_samples.append(ex[0])
         for temp_1_idx in samples_for_template_1_indices:
-            ex = sampled_ex_by_template[temp_1_idx][0]
+            ex = sampled_ex_by_template[temp_1_idx][1]
             final_samples.append(ex[0])
+
         assert(len(final_samples) == n_template_0 + n_template_1)
         return final_samples
 
@@ -231,6 +243,7 @@ def check_and_fill_config(cfg):
                 raise ValueError("The perc_*_ambig and perc_*_unambig must sum to 1.")
     return cfg         
 
+
 @hydra.main(config_path="", config_name="")
 def main(cfg: DictConfig):
     print(OmegaConf.to_yaml(cfg))
@@ -252,7 +265,6 @@ def main(cfg: DictConfig):
                     generate_unambigous_bound_pronoun(is_female=False)
 
     unambiguous = generate_unambiguous_basic()
-
 
     if cfg.sampler == "random":
         ambiguous_data = (pp_pairs + scope_pairs + reverse_scope_pairs + conj_pairs + bound_pairs)
@@ -314,7 +326,7 @@ def main(cfg: DictConfig):
                     continue
                 ratio_dict[split][key] = cfg[split][f"{key}_ratio"]
 
-        sampler = PairedSampler(cfg) 
+        sampler = RatioSampler(cfg) 
 
         # TODO: elias: pick up here 
         # right now the code is pretty ugly and repetitive and i think we're doing a lot of uncessary sampling 

@@ -1,8 +1,10 @@
 import itertools
 import copy 
+import re 
 
 from ambiguous_parsing.generation.fixtures.nps import NPS_MAP
 from ambiguous_parsing.generation.fixtures.vps import VPS_MAP
+from ambiguous_parsing.generation.fixtures.nps import PLURAL_NP_TO_SINGULAR
 
 class Template:
     def __init__(self, 
@@ -78,7 +80,8 @@ class Template:
                     binding[tag] = tok
                 all_var_bindings.append(binding)
 
-            surface = " ".join(surface)
+            surface = self.make_fluent(surface)
+
             for var_binding in all_var_bindings:
                 filled = lf_template_copy.format(**var_binding)
 
@@ -92,3 +95,23 @@ class Template:
                 pairs.append(data) 
 
         return pairs 
+
+    def make_fluent(self, surface):
+        """some simple rules to make the surface fluent"""
+        # check for invalid plurals
+        force_singular = ['a', 'every', 'each', 'the']
+        surface = list(surface)
+        for i, word in enumerate(surface):
+            if word in PLURAL_NP_TO_SINGULAR.keys() and i > 0:
+                prev_word = surface[i-1]
+                if prev_word in force_singular:
+                    surface[i] = PLURAL_NP_TO_SINGULAR[word]
+
+        # create string 
+        surface = " ".join(surface)
+        # check for invalid articles
+        a_an_gex = re.compile(r'(^| )(a) ([aeiou])')
+        surface = re.sub(a_an_gex, r'\2n \3', surface)
+        return surface
+
+         
