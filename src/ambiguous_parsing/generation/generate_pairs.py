@@ -261,7 +261,7 @@ def generate_unambiguous_scope():
     every_intrans_template_text = ["every", INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS]
     every_intrans_template_tags = [None, "np1", "vp1"]
     every_intrans_template = Template(every_intrans_template_text, every_intrans_template_tags)
-    intrans_lf_template = "exists x . forall y . exists a . {np1}(y) {vp1}(a) AND agent(a, y)"
+    intrans_lf_template = "forall y . exists a . {np1}(y) AND {vp1}(a) AND agent(a, y)"
     pairs += every_intrans_template.generate(intrans_lf_template, 0, "scope_unambig")
     
     each_intrans_template_text = ["each", INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS]
@@ -430,7 +430,7 @@ def generate_unambiguous_basic():
     def_indef_transitive_text = [NAMES, TRANSITIVE_VPS, 'the', INDEFINITE_NPS]
     def_indef_transitive_tags = ['np1', 'vp1', None, 'np2']
     def_indef_transitive_template = Template(def_indef_transitive_text, def_indef_transitive_tags)
-    def_indef_lf_template = "exists x . exists a . {np2}(x) AND {vp1}(a) AND agent(a, {np1}) AND patient(a, y)"
+    def_indef_lf_template = "exists x . exists a . {np2}(x) AND {vp1}(a) AND agent(a, {np1}) AND patient(a, x)"
     pairs += def_indef_transitive_template.generate(def_indef_lf_template, 0, "unambig")
 
     def_def_transitive_text = [NAMES, TRANSITIVE_VPS, NAMES]

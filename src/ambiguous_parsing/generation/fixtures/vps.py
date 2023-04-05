@@ -12,4 +12,4 @@ INTRANSITIVE_VPS_FOR_BOUND = ["waved", "smiled", "lept", "frowned", "shouted"]
 VPS = (VISUAL_VPS + TACTILE_VPS + AUDITORY_VPS + OTHER_VPS + INTRANSITIVE_VPS + INTRANSITIVE_VPS_FOR_BOUND)
 VPS_MAP = {k:k for k in VPS}
 VPS_MAP['listened to'] = 'listened'
-VPS_MAP['picked_up'] = 'picked_up'
+VPS_MAP['picked up'] = 'picked_up'
