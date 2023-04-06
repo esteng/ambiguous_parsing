@@ -46,65 +46,75 @@ def load_unambiguous():
     unambiguous = generate_unambiguous_basic()
     return unambiguous
 
-def check_fol_roundtrip(formula_str):
+def check_fol_roundtrip(formula_str, ordered=False):
     formula_obj = FOLFormula.parse_formula(formula_str) 
-    generated_str_1 = formula_obj.render()
+    generated_str_1 = formula_obj.render(ordered_vars=ordered)
     formula_obj_2 = FOLFormula.parse_formula(generated_str_1)
-    generated_str_2 = formula_obj_2.render()
+    generated_str_2 = formula_obj_2.render(ordered_vars=ordered)
     assert (generated_str_1 == generated_str_2)
 
-def check_fol_roundtrip_via_lisp(formula_str):
+
+def check_fol_roundtrip_via_lisp(formula_str, ordered=True):
     formula_obj = FOLFormula.parse_formula(formula_str) 
-    generated_str_1 = formula_obj.render()
+    generated_str_1 = formula_obj.render(ordered_vars=ordered) 
     # roundtrip once to anonymize
     formula_obj = FOLFormula.parse_formula(generated_str_1) 
-    generated_str_1 = formula_obj.render()
+    generated_str_1 = formula_obj.render(ordered_vars=ordered) 
 
     lisp_obj = LispFormula.from_formula(formula_obj)
-    lisp_str = lisp_obj.render()
+    lisp_str = lisp_obj.render(ordered_vars=ordered)
     lisp_obj_2 = LispFormula.parse_formula(lisp_str)
 
     formula_obj_2 = FOLFormula.from_formula(lisp_obj_2)
-    generated_str_2 = formula_obj_2.render()
+    generated_str_2 = formula_obj_2.render(ordered_vars=ordered)
     assert (generated_str_1 == generated_str_2)
 
-# def test_pp_pairs(load_pp_pairs):
-#     for pair in load_pp_pairs:
-#         check_fol_roundtrip(pair['lf'])
+def test_pp_pairs(load_pp_pairs):
+    for pair in load_pp_pairs:
+        check_fol_roundtrip(pair['lf'])
+        check_fol_roundtrip(pair['lf'], ordered=True)
 
-# def test_scope_pairs(load_scope_pairs):
-#     for pair in load_scope_pairs:
-#         check_fol_roundtrip(pair['lf'])
+def test_scope_pairs(load_scope_pairs):
+    for pair in load_scope_pairs:
+        check_fol_roundtrip(pair['lf'])
+        check_fol_roundtrip(pair['lf'], ordered=True)
 
-# def test_conj_pairs(load_conj_pairs):
-#     for pair in load_conj_pairs:
-#         check_fol_roundtrip(pair['lf'])
+def test_conj_pairs(load_conj_pairs):
+    for pair in load_conj_pairs:
+        check_fol_roundtrip(pair['lf'])
+        check_fol_roundtrip(pair['lf'], ordered=True)
 
-# def test_bound_pairs(load_bound_pairs):
-#     for pair in load_bound_pairs:
-#         check_fol_roundtrip(pair['lf'])
+def test_bound_pairs(load_bound_pairs):
+    for pair in load_bound_pairs:
+        check_fol_roundtrip(pair['lf'])
+        check_fol_roundtrip(pair['lf'], ordered=True)
 
-# def test_unambiguous(load_unambiguous):
-#     for pair in load_unambiguous:
-#         print(pair['lf'])
-#         check_fol_roundtrip(pair['lf'])
+def test_unambiguous(load_unambiguous):
+    for pair in load_unambiguous:
+        check_fol_roundtrip(pair['lf'])
+        check_fol_roundtrip(pair['lf'], ordered=True)
 
 def test_pp_pairs_lisp(load_pp_pairs):
     for pair in load_pp_pairs:
         check_fol_roundtrip_via_lisp(pair['lf'])
+        check_fol_roundtrip_via_lisp(pair['lf'], ordered=True)
 
 def test_scope_pairs_lisp(load_scope_pairs):
     for pair in load_scope_pairs:
         check_fol_roundtrip_via_lisp(pair['lf'])
+        check_fol_roundtrip_via_lisp(pair['lf'], ordered=True)
 
 def test_conj_pairs_lisp(load_conj_pairs):
     for pair in load_conj_pairs:
         check_fol_roundtrip_via_lisp(pair['lf'])
+        check_fol_roundtrip_via_lisp(pair['lf'], ordered=True)
 
 def test_bound_pairs_lisp(load_bound_pairs):
     for pair in load_bound_pairs:
         check_fol_roundtrip_via_lisp(pair['lf'])
+        check_fol_roundtrip_via_lisp(pair['lf'], ordered=True)
 
 def test_unambiguous_lisp(load_unambiguous):
     for pair in load_unambiguous:
         check_fol_roundtrip_via_lisp(pair['lf'])
+        check_fol_roundtrip_via_lisp(pair['lf'], ordered=True)

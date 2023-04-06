@@ -4,6 +4,8 @@ import pdb
 from copy import deepcopy
 import networkx as nx
 from ambiguous_parsing.tree.tree_tools import shunt, tokenize, operator_info, lisp_to_ast
+from ambiguous_parsing.generation.fixtures.vps import VPS_MAP
+
 
 class Formula:
 
@@ -21,15 +23,50 @@ class Formula:
     def render(self) -> str: 
         raise NotImplementedError
 
-    def anonymize_vars(self) -> Tuple[List[str], nx.DiGraph]: 
+    def determine_event(self, var: str, statements: nx.DiGraph) -> bool: 
+        """
+        determine if a given variable is an event or nominal variable
+        """
+        vps = VPS_MAP.values() 
+        for n in statements.nodes:
+            name = statements.nodes[n]['name']
+            args = re.search("\[(.+)\]", name)
+            if args is not None:
+                args = args.group(1).split(",")
+                fxn_name = name.split("[")[0]
+                if var in args: 
+                    # predicate vars are first arg of agent or patient 
+                    if fxn_name in ['agent', 'patient'] and args.index(var) == 0: 
+                        return True
+                    # predicate vars given as event(var)
+                    elif fxn_name in vps and len(args) == 1:
+                        return True
+                    else:
+                        pass 
+        return False
+
+    def anonymize_vars(self, ordered_vars) -> Tuple[List[str], nx.DiGraph]: 
         """anonymize variables in the tree"""
         quant_str = deepcopy(self.quantifiers)
         statements = deepcopy(self.statements)
         old_to_new_map = {}
         new_quants = []
+        event_vars = ['a', 'e', 'i']
+        nominal_vars = ['x', 'y', 'z']
         for i, var_stmt in enumerate(quant_str): 
             quant, var = var_stmt.split(" ")
-            new_var = f"v{i}"
+            if ordered_vars: 
+                # determine if is an event or a nominal 
+                is_event = self.determine_event(var, statements)
+                if is_event:
+                    new_var = event_vars.pop(0)
+                else:
+                    try:
+                        new_var = nominal_vars.pop(0)
+                    except:
+                        pdb.set_trace()
+            else:
+                new_var = f"v{i}"
             old_to_new_map[var] = new_var
             new_quants.append(f"{quant} {new_var}")
 
@@ -65,7 +102,8 @@ class Formula:
         new_quants = [q for q in new_quants if q is not None]
 
         return new_quants, statements
-    
+
+
     def order_statements(self, statements: nx.DiGraph) -> str: 
         """order statements alphabetically and stringify.
         Statements are already sorted topologically"""
@@ -131,14 +169,16 @@ class FOLFormula(Formula):
         statement_tree = shunt(tokenized)
         return statement_tree 
 
-    def render(self) -> str: 
+    def render(self, ordered_vars: bool = False) -> str: 
         """convert the formula into a canonical FOL form.
         1. replace all quantified variables with numbers
         2. remove un-used variables/quantifiers
         3. order statements alphabetically """
 
         # 1. replace quantified vars and 2. remove un-used vars  
-        quantifiers, statements = self.anonymize_vars() 
+        # 1.1 if ordered vars, return to ordered (x,y,z,a,e,i) format, otherwise use v0, v1, v2,...
+        quantifiers, statements = self.anonymize_vars(ordered_vars) 
+
         # 3. order statements alphabetically
         statements = self.order_statements(statements) 
         quantifier_str = " . ".join(quantifiers)
@@ -178,9 +218,9 @@ class LispFormula(Formula):
         quantifiers, statement = lisp_to_ast(splitstring)
         return cls(quantifiers, statement) 
 
-    def render(self) -> str:
+    def render(self, ordered_vars: bool = False) -> str:
         """convert the formula into a canonical Lisp form."""
-        quantifiers, statements = self.anonymize_vars() 
+        quantifiers, statements = self.anonymize_vars(ordered_vars) 
 
         # get root of statement graph 
         children = [n2 for n1, n2 in statements.edges]
