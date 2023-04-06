@@ -183,9 +183,6 @@ class FOLFormula(Formula):
                 return split_name(statements.nodes[node]['name'], atom=True) 
             op = f" {split_name(statements.nodes[node]['name'])} "
 
-            if parent_op is None:
-                for n in statements.nodes:
-                    print(f"{n}: {statements.nodes[n]['name']}")
             # don't use parens if the same type of parent and parent is AND or OR 
             # i.e. instead of ((a AND b) AND c) allow (a AND b AND c)
             if op.strip() in ["AND", "OR"] and (op.strip() == parent_op or parent_op is None):
