@@ -4,3 +4,5 @@
 src/outputs
 build
 build/*
+*.egg-info
+*.egg-info/*
