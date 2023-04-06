@@ -22,7 +22,7 @@ def tokenize(splitstring):
         char = splitstring.pop(0)
 
         # print(f"CHAR: {char}")
-        if re.match("\w+\[.*\]", char): 
+        if re.match(r"\w+\[.*\]", char): 
             if state != "num":
                 output.append(buf) if buf != "" else False
                 buf = ""
@@ -57,7 +57,7 @@ def shunt(tokens):
     while len(tokens) != 1:
         current_token = tokens.pop(0)
 
-        if re.match("\w+\[.*\]", current_token): 
+        if re.match(r"\w+\[.*\]", current_token): 
             # Is a number
             # print("number", current_token)
             output.append(current_token)
@@ -232,11 +232,11 @@ def lisp_to_ast(tokenized: List[str]) -> nx.DiGraph:
             elif symbol == ')':
                     raise ValueError("Invalid input: Unmatched close parenthesis.")
             else:
-                graph.add_node(f"{symbol}:{global_idx}", name=symbol)
-                graph.add_edge(parent, f"{symbol}:{global_idx}")
+                graph.add_node(global_idx, name=symbol)
+                graph.add_edge(parent, global_idx)
                 ast.append(symbol)
                 if i == 0:
-                    parent = f"{symbol}:{global_idx}"
+                    parent = global_idx
                 global_idx += 1
 
             i += 1

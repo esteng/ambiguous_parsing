@@ -1,6 +1,7 @@
 import re 
 from typing import List, Tuple
 import pdb
+from copy import deepcopy
 import networkx as nx
 from ambiguous_parsing.tree.tree_tools import shunt, tokenize, operator_info, lisp_to_ast
 
@@ -22,8 +23,8 @@ class Formula:
 
     def anonymize_vars(self) -> Tuple[List[str], nx.DiGraph]: 
         """anonymize variables in the tree"""
-        quant_str = self.quantifiers
-        statements = self.statements
+        quant_str = deepcopy(self.quantifiers)
+        statements = deepcopy(self.statements)
         old_to_new_map = {}
         new_quants = []
         for i, var_stmt in enumerate(quant_str): 
