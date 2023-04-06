@@ -48,7 +48,7 @@ def tokenize(splitstring):
     return output
 
 
-def shunt(tokens):
+def shunt(tokens, flatten):
     tokens += ['end']
     operators = []
     output = []
@@ -124,9 +124,9 @@ def shunt(tokens):
         idx += 1 
 
     output.extend(operators[::-1])
-    return convert_to_tree(output) 
+    return convert_to_tree(output, flatten) 
 
-def convert_to_tree(output):
+def convert_to_tree(output, do_flatten=False):
     # return as a binary tree, currently only supports binary operations  
     reversed = output[::-1]
     graph = nx.DiGraph()
@@ -154,25 +154,38 @@ def convert_to_tree(output):
         if child_counter[parent] == 2:
             parent_stack = [x for x in parent_stack if x != parent]
 
+    if do_flatten:
+        # naive flatten, O(N)
+        for i in range(len(graph.nodes)):
+            graph = flatten(graph)
+
     # ammend node names to have more information for sorting later 
     for parent in graph.nodes:
         children = [n2 for n1, n2 in graph.edges() if n1 == parent]
         # check for cases where children are ops 
         child_names = [graph.nodes[n]['name'].split(":")[0] for n in children]
+        # pdb.set_trace()
         if all([x in operator_info.keys() for x in child_names]):
-            for n in children:
+            new_child_names = []
+            for i, n in enumerate(children):
+                # if child_names[i] in operator_info.keys():
                 grandchildren = [n2 for n1, n2 in graph.edges() if n1 == n]
                 new_suffix = []
                 for gc in grandchildren:
-                    node_str = graph.nodes[gc]['name'].split(":")[0].split("[")[0]
+                    node_str = graph.nodes[gc]['name'].split(":")[0]
+                    node_str = re.sub(r"\[.*?\]", '', node_str) 
                     new_suffix.append(node_str)
                 new_suffix = sorted(new_suffix)
+                # pdb.set_trace()
                 graph.nodes[n]['name'] = f"{graph.nodes[n]['name'].split(':')[0]}:{''.join(new_suffix)}" 
-            graph.nodes[parent]['name'] = f"{graph.nodes[parent]['name'].split(':')[0]}:{''.join(child_names)}"
+                new_child_names.append(re.sub(":", "", graph.nodes[n]['name']))
+                # new_child_names.append(graph.nodes[n]['name'].split(":")[0]) 
+            # remove child variable names 
+            new_child_names = [re.sub(r"\[.*?\]", '', x) for x in new_child_names]
+            # pdb.set_trace()
+            graph.nodes[parent]['name'] = f"{graph.nodes[parent]['name'].split(':')[0]}:{''.join(new_child_names)}"
 
-    # naive flatten, O(N)
-    for i in range(len(graph.nodes)):
-        graph = flatten(graph)
+    
     return graph
 
 def flatten(graph):
@@ -183,8 +196,8 @@ def flatten(graph):
     edges = [x for x in graph.edges()]
     for edge in edges: 
         node1, node2 = edge
-        name1 = graph.nodes[node1]['name']
-        name2 = graph.nodes[node2]['name']
+        name1 = graph.nodes[node1]['name'].split(":")[0]
+        name2 = graph.nodes[node2]['name'].split(":")[0]
         if name1 == name2 and name1 in operator_info.keys():
             # merge nodes
             node2_outgoing = [e for e in graph.edges if e[0] == node2]

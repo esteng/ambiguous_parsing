@@ -61,10 +61,7 @@ class Formula:
                 if is_event:
                     new_var = event_vars.pop(0)
                 else:
-                    try:
-                        new_var = nominal_vars.pop(0)
-                    except:
-                        pdb.set_trace()
+                    new_var = nominal_vars.pop(0)
             else:
                 new_var = f"v{i}"
             old_to_new_map[var] = new_var
@@ -104,32 +101,6 @@ class Formula:
         return new_quants, statements
 
 
-    def order_statements(self, statements: nx.DiGraph) -> str: 
-        """order statements alphabetically and stringify.
-        Statements are already sorted topologically"""
-        seq = []
-        op = None            
-        curr_par = None
-
-        def split_name(node):
-            return node.split(":")[0]
-
-        def order_helper(node):
-            # base case: is atom, return 
-            # recursive case: return ( +  op.join([helper(child) for child in children]) +   )
-
-            children = [n2 for n1, n2 in statements.edges if n1 == node]
-            children = sorted(children, key = lambda x: statements.nodes[x]['name'])
-            # child_names = [statements.nodes[n]['name'] for n in children]
-            # print(f"children of {statements.nodes[node]['name']} are {child_names}")
-            if len(children) == 0: 
-                return split_name(statements.nodes[node]['name']) 
-            op = f" {split_name(statements.nodes[node]['name'])} "
-
-            return "( " + op.join([order_helper(n) for n in children]) + " )"
-
-        seq = order_helper(0)
-        return seq
 
 class FOLFormula(Formula):
     """
@@ -166,7 +137,7 @@ class FOLFormula(Formula):
 
         splitstring = re.split(r"\s+", string)
         tokenized = tokenize(splitstring)
-        statement_tree = shunt(tokenized)
+        statement_tree = shunt(tokenized, flatten=True)
         return statement_tree 
 
     def render(self, ordered_vars: bool = False) -> str: 
@@ -183,6 +154,47 @@ class FOLFormula(Formula):
         statements = self.order_statements(statements) 
         quantifier_str = " . ".join(quantifiers)
         return f"{quantifier_str} . {statements}"
+
+    def order_statements(self, statements: nx.DiGraph) -> str: 
+        """order statements alphabetically and stringify.
+        Statements are already sorted topologically"""
+        seq = []
+        op = None            
+        curr_par = None
+
+        def split_name(node, atom=False):
+            splitname = node.split(":")[0]
+            if atom:
+                args = re.search(r"\[(.+?)\]", splitname).group(1)
+                args = args.split(',')
+                new_name = splitname.split("[")[0] + "(" + ", ".join(args) + ")"
+                return new_name
+            return splitname
+
+        def order_helper(node, parent_op=None):
+            # base case: is atom, return 
+            # recursive case: return ( +  op.join([helper(child) for child in children]) +   )
+
+            children = [n2 for n1, n2 in statements.edges if n1 == node]
+            children = sorted(children, key = lambda x: statements.nodes[x]['name'])
+            # child_names = [statements.nodes[n]['name'] for n in children]
+            # print(f"children of {statements.nodes[node]['name']} are {child_names}")
+            if len(children) == 0: 
+                return split_name(statements.nodes[node]['name'], atom=True) 
+            op = f" {split_name(statements.nodes[node]['name'])} "
+
+            if parent_op is None:
+                for n in statements.nodes:
+                    print(f"{n}: {statements.nodes[n]['name']}")
+            # don't use parens if the same type of parent and parent is AND or OR 
+            # i.e. instead of ((a AND b) AND c) allow (a AND b AND c)
+            if op.strip() in ["AND", "OR"] and (op.strip() == parent_op or parent_op is None):
+                return op.join([order_helper(n, op.strip()) for n in children])
+            else:
+                return "( " + op.join([order_helper(n, op.strip()) for n in children]) + " )"
+
+        seq = order_helper(0)
+        return seq
 
 
 

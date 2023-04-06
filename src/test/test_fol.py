@@ -53,7 +53,6 @@ def check_fol_roundtrip(formula_str, ordered=False):
     generated_str_2 = formula_obj_2.render(ordered_vars=ordered)
     assert (generated_str_1 == generated_str_2)
 
-
 def check_fol_roundtrip_via_lisp(formula_str, ordered=True):
     formula_obj = FOLFormula.parse_formula(formula_str) 
     generated_str_1 = formula_obj.render(ordered_vars=ordered) 
@@ -68,6 +67,16 @@ def check_fol_roundtrip_via_lisp(formula_str, ordered=True):
     formula_obj_2 = FOLFormula.from_formula(lisp_obj_2)
     generated_str_2 = formula_obj_2.render(ordered_vars=ordered)
     assert (generated_str_1 == generated_str_2)
+
+def test_fol():
+    fol_str = "exists x . exists a . exists e . spyglass(x) AND observed(a) AND agent(a, Ada) AND instrument(a, x)" 
+    check_fol_roundtrip(fol_str)
+    check_fol_roundtrip(fol_str, ordered=True)
+
+def test_conj_trouble():
+    fol_str = "exists x . exists a . exists e . exists i . bird(x) AND ate(a) AND agent(a, x) AND ( ( drank(e) AND agent(e, x) ) OR ( slept(i) AND agent(i, x) ) )"
+    check_fol_roundtrip(fol_str)
+    check_fol_roundtrip(fol_str, ordered=True)
 
 def test_pp_pairs(load_pp_pairs):
     for pair in load_pp_pairs:

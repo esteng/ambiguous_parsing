@@ -6,10 +6,11 @@ import pdb
 from pathlib import Path
 from collections import defaultdict 
 from typing import List, Dict, Any
-
-from ambiguous_parsing.generation import TYPE_KEYS
 import numpy as np 
 np.random.seed(12)
+
+from ambiguous_parsing.generation import TYPE_KEYS
+from ambiguous_parsing.tree.formula import FOLFormula, LispFormula
 
 from ambiguous_parsing.generation.generate_pairs import (generate_pp_pairs, 
                                                         generate_unambiguous_pp,
@@ -243,6 +244,19 @@ def check_and_fill_config(cfg):
                 raise ValueError("The perc_*_ambig and perc_*_unambig must sum to 1.")
     return cfg         
 
+def rerender_data(cfg, data):
+    to_ret = []
+    for pairs in data:
+        for i, pair in enumerate(pairs):
+            # parse from text representation 
+            formula = FOLFormula.parse_formula(pair['lf'])
+            if not cfg.is_fol:
+                # cast 
+                formula = LispFormula.from_formula(formula)
+            rendered = formula.render(cfg.ordered_vars) 
+            pairs[i]['lf'] = rendered
+        to_ret.append(pairs)
+    return to_ret 
 
 @hydra.main(config_path="", config_name="")
 def main(cfg: DictConfig):
@@ -265,6 +279,10 @@ def main(cfg: DictConfig):
                     generate_unambigous_bound_pronoun(is_female=False)
 
     unambiguous = generate_unambiguous_basic()
+
+    (pp_pairs, unambig_pp, scope_pairs, reverse_scope_pairs, unambig_scope,
+    conj_pairs, unambig_conj, bound_pairs, unambig_bound, unambiguous) = rerender_data(cfg, (pp_pairs, unambig_pp, scope_pairs, reverse_scope_pairs, unambig_scope,
+    conj_pairs, unambig_conj, bound_pairs, unambig_bound, unambiguous)) 
 
     if cfg.sampler == "random":
         ambiguous_data = (pp_pairs + scope_pairs + reverse_scope_pairs + conj_pairs + bound_pairs)
