@@ -1,6 +1,7 @@
 import hydra
 import re
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, open_dict
+from copy import deepcopy
 import json 
 import pdb 
 from pathlib import Path
@@ -138,8 +139,9 @@ class RatioSampler:
         all_samples = []
         # make sure that for each ambiguous example, the pair is in the same split 
         for type_key in TYPE_KEYS: 
-            if type_key == "unambig":
+            if type_key == "unambig" or type_key not in unambig_nums_per_type.keys():
                 # unambig data isn't paired 
+                print(f"WARNING: skipping type key {type_key}")
                 continue
 
             n_unambig = unambig_nums_per_type[type_key]
@@ -148,32 +150,35 @@ class RatioSampler:
             # just sample normally, since there's only 1 interpretation per example
             unambig_indices = [i for i in range(len(unambig_pairs))]
             unambig_sampled_indices = np.random.choice(unambig_indices, n_unambig, replace=False)
-            unambig_sampled_pairs = [unambig_pairs[i] for i in unambig_sampled_indices]
+            unambig_sampled_pairs = [deepcopy(unambig_pairs[i]) for i in unambig_sampled_indices]
 
             all_samples += unambig_sampled_pairs
             # for ambiguous
             n_ambig = ambig_nums_per_type[type_key]
             ratio = ratio_dict[type_key]
-            ambig_pairs = ambig_data[type_key]
+            ambig_pairs = deepcopy(ambig_data[type_key])
             ambig_sampled_pairs = self.get_interpretations_by_ratio(ambig_pairs, n_ambig, ratio)
             all_samples += ambig_sampled_pairs
 
         return all_samples
 
 def split_random(all_examples, n_train, n_dev, n_test):
-    indices = [i for i in range(len(all_examples))]
-    train_idxs = np.random.choice(indices, n_train, replace=False)
-    indices = [i for i in indices if i not in train_idxs]
+    indices = set([i for i in range(len(all_examples))])
+    n_train = min(len(indices), n_train)
+    train_idxs = np.random.choice(list(indices), n_train, replace=False)
+    indices -= set(train_idxs)
 
-    dev_idxs = np.random.choice(indices, n_dev, replace=False)
-    indices = [i for i in indices if i not in dev_idxs]
+    dev_idxs = np.random.choice(list(indices), n_dev, replace=False)
+    indices -= set(dev_idxs)
 
-    test_idxs = np.random.choice(indices, n_test, replace=False)
-    test_idxs = [i for i in indices if i not in test_idxs]
+    test_idxs = np.random.choice(list(indices), n_test, replace=False)
 
     train = [all_examples[i] for i in train_idxs]
     dev = [all_examples[i] for i in dev_idxs]
     test = [all_examples[i] for i in test_idxs]
+    assert(len(set(train) & set(dev)) == 0)
+    assert(len(set(train) & set(test)) == 0)
+    assert(len(set(dev) & set(test)) == 0)
     return train, dev, test
 
 def split_keep_paired(all_pairs, n_train, n_dev, n_test):
@@ -185,14 +190,14 @@ def split_keep_paired(all_pairs, n_train, n_dev, n_test):
     train_idxs, dev_idxs, test_idxs = [], [], []
     idxs = [i for i in range(len(exs_by_surface))]
 
-    train_idxs = np.random.choice(idxs, n_train, replace=False)
-    idxs = [i for i in idxs if i not in train_idxs]
+    idxs = set(idxs)
+    train_idxs = np.random.choice(list(idxs), n_train, replace=False)
+    idxs -= set(train_idxs)
 
-    dev_idxs = np.random.choice(idxs, n_dev, replace=False)
-    idxs = [i for i in idxs if i not in dev_idxs]
+    dev_idxs = np.random.choice(list(idxs), n_dev, replace=False)
+    idxs -= set(dev_idxs) 
 
-    test_idxs = np.random.choice(idxs, n_test, replace=False)
-    test_idxs = idxs
+    test_idxs = np.random.choice(list(idxs), n_test, replace=False)
 
     for idx in train_idxs:
         train += exs_by_surface[idx]
@@ -212,30 +217,36 @@ def split_data_for_key(ambig, unambig, key, cfg):
     num_dev_unambig = int(cfg.dev.total * (1 - cfg.dev[f"perc_{key}_ambig"]) * cfg.dev[f'perc_{key}'])
     num_test_unambig = int(cfg.test.total * (1 - cfg.test[f"perc_{key}_ambig"]) * cfg.test[f'perc_{key}'])
 
-    try: 
-        ambig_train, ambig_dev, ambig_test = split_keep_paired(ambig, 
-                                                    num_train_ambig,
-                                                    num_dev_ambig,
-                                                    num_test_ambig)
+    ambig_train, ambig_dev, ambig_test = split_keep_paired(ambig, 
+                                                num_train_ambig,
+                                                num_dev_ambig,
+                                                num_test_ambig)
 
-        unambig_train, unambig_dev, unambig_test = split_keep_paired(unambig,
-                                                        num_train_unambig,
-                                                        num_dev_unambig,
-                                                        num_test_unambig)
-    except:
-        pdb.set_trace()
+    unambig_train, unambig_dev, unambig_test = split_keep_paired(unambig,
+                                                    num_train_unambig,
+                                                    num_dev_unambig,
+                                                    num_test_unambig)
+
     return ambig_train, ambig_dev, ambig_test, unambig_train, unambig_dev, unambig_test
 
 
 def check_and_fill_config(cfg):
     for split in ['train', 'dev', 'test']:
-        percs = [cfg[split][f"perc_{key}"] for key in TYPE_KEYS]
+        valid_type_keys = set(["_".join(k.split("_")[1:]) for k in cfg[split].keys() if k.startswith("perc_")]) 
+        valid_type_keys = {x for x in valid_type_keys if x in TYPE_KEYS}
+        percs = [cfg[split][f"perc_{key}"] for key in valid_type_keys]
         if any([perc is None for perc in percs]):
             if not all([perc is None for perc in percs]):
                 raise ValueError("If you specify any of the perc_*_ambig or perc_*_unambig, you must specify all of them.")
-            # if none are specified, distribute evenly 
-            for key in TYPE_KEYS:
-                cfg[split][f"perc_{key}"] = 1/len(TYPE_KEYS)
+            # if none are specified, distribute evenly across all that are written with None
+            # things not in the config are assigned 0 examples 
+            for key in valid_type_keys:
+                cfg[split][f"perc_{key}"] = 1/len(valid_type_keys)
+
+            for missing_key in set(TYPE_KEYS) - valid_type_keys: 
+                with open_dict(cfg):
+                    cfg[split][f"perc_{missing_key}"] = 0
+
         else:
             if not all([perc is not None for perc in percs]):
                 raise ValueError("If you specify any of the perc_*_ambig or perc_*_unambig, you must specify all of them.")
@@ -244,19 +255,20 @@ def check_and_fill_config(cfg):
                 raise ValueError("The perc_*_ambig and perc_*_unambig must sum to 1.")
     return cfg         
 
-def rerender_data(cfg, data):
-    to_ret = []
-    for pairs in data:
-        for i, pair in enumerate(pairs):
-            # parse from text representation 
-            formula = FOLFormula.parse_formula(pair['lf'])
-            if not cfg.is_fol:
-                # cast 
-                formula = LispFormula.from_formula(formula)
-            rendered = formula.render(cfg.ordered_vars) 
-            pairs[i]['lf'] = rendered
-        to_ret.append(pairs)
-    return to_ret 
+def rerender(lf, is_fol, ordered_vars):
+    formula = FOLFormula.parse_formula(lf)
+    if not is_fol:
+        # cast 
+        formula = LispFormula.from_formula(formula)
+    rendered = formula.render(ordered_vars) 
+    return rendered
+
+def rerender_data(cfg, pairs):
+    for i, pair in enumerate(pairs):
+        # parse from text representation 
+        rendered = rerender(pair['lf'], cfg.is_fol, cfg.ordered_vars)
+        pairs[i]['lf'] = rendered
+    return pairs
 
 @hydra.main(config_path="", config_name="")
 def main(cfg: DictConfig):
@@ -280,9 +292,6 @@ def main(cfg: DictConfig):
 
     unambiguous = generate_unambiguous_basic()
 
-    (pp_pairs, unambig_pp, scope_pairs, reverse_scope_pairs, unambig_scope,
-    conj_pairs, unambig_conj, bound_pairs, unambig_bound, unambiguous) = rerender_data(cfg, (pp_pairs, unambig_pp, scope_pairs, reverse_scope_pairs, unambig_scope,
-    conj_pairs, unambig_conj, bound_pairs, unambig_bound, unambiguous)) 
 
     if cfg.sampler == "random":
         ambiguous_data = (pp_pairs + scope_pairs + reverse_scope_pairs + conj_pairs + bound_pairs)
@@ -340,14 +349,12 @@ def main(cfg: DictConfig):
         ratio_dict = {"train": {}, "dev": {}, "test": {}}
         for split in ['train', 'dev', 'test']:
             for key in TYPE_KEYS:
-                if key == "unambig": 
+                if key.startswith("unambig"): 
                     continue
                 ratio_dict[split][key] = cfg[split][f"{key}_ratio"]
 
         sampler = RatioSampler(cfg) 
 
-        # TODO: elias: pick up here 
-        # right now the code is pretty ugly and repetitive and i think we're doing a lot of uncessary sampling 
         train = sampler.sample(ambig_data['train'], 
                                 unambig_data['train'], 
                                 ambig_nums_per_type['train'], 
@@ -372,6 +379,17 @@ def main(cfg: DictConfig):
     else:
         raise NotImplementedError(f"Sampler: {cfg.sampler} is not implemented")
 
+    # optionally re-render train. keeping atoms in the canonical order they
+    # were written in may be easier to predict 
+    if cfg.canonicalize_train:
+        train = rerender_data(cfg, train)
+
+    # always re-render dev and test so that they match at eval
+    # since we always re-render predictions  
+    dev = rerender_data(cfg, dev)
+    test = rerender_data(cfg, test)
+
+
     cfg.out_dir = Path(cfg.out_dir)    
 
     if not cfg.out_dir.exists():
@@ -390,7 +408,38 @@ def main(cfg: DictConfig):
             f1.write(json.dumps(line) + "\n")
 
 
+    # write all the dev and test examples to separate files to use later for eval
+    # these files contain both interpretations for ambiguous examples 
 
+
+    with open(cfg.out_dir.joinpath("train_eval.jsonl"), "w") as f1:
+        for type_key, __ in ambig_data['train'].items():
+            data = ambig_data['train'][type_key] + unambig_data['train'][type_key]
+            for line in data:
+                if not cfg.is_fol:
+                    line['lf'] = rerender(line['lf'], cfg.is_fol, cfg.ordered_vars)
+                f1.write(json.dumps(line) + "\n")
+    
+    with open(cfg.out_dir.joinpath("dev_eval.jsonl"), "w") as f1:
+        for type_key, __ in ambig_data['dev'].items():
+            data = ambig_data['dev'][type_key] + unambig_data['dev'][type_key]
+            for line in data:
+                if not cfg.is_fol:
+                    line['lf'] = rerender(line['lf'], cfg.is_fol, cfg.ordered_vars)
+                f1.write(json.dumps(line) + "\n")
+
+    with open(cfg.out_dir.joinpath("test_eval.jsonl"), "w") as f1:
+        for type_key, __ in ambig_data['test'].items():
+            data = ambig_data['test'][type_key] + unambig_data['test'][type_key]
+            for i, line in enumerate(data):
+                if not cfg.is_fol:
+                    try:
+                        line['lf'] = rerender(line['lf'], cfg.is_fol, cfg.ordered_vars)
+                    except:
+                        # assert(line['surface'] not in done_train)
+                        # assert(line['surface'] not in done_dev)
+                        pdb.set_trace()
+                f1.write(json.dumps(line) + "\n")
 
 
 

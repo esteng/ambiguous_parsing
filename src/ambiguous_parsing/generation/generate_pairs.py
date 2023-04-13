@@ -483,7 +483,75 @@ def generate_unambiguous_conj():
     disj_def_intransitive_lf_template = "exists a . exists e . ( {vp1}(a) AND agent(a, {np1}) ) OR ( {vp2}(e) AND agent(e, {np1}) )"
     pairs += disj_def_intransitive_template.generate(disj_def_intransitive_lf_template, 0, "unambig")
 
-    return pairs   
+    return pairs  
+
+
+def generate_unambiguous_instrument(vp_list, pp_str, pp_np_list):
+    """
+    Generate unambiguous examples of intransitive verbs being used with instruments.
+    E.g. the man observed with a telescope.
+    """
+    # visual templates 
+    pairs = []
+    indef_indef_template_text = ["the", INDEFINITE_HUMAN_NPS, vp_list, pp_str, pp_np_list]
+    indef_indef_template_tags = [None, "np1", "vp1", None, "np2"] 
+    indef_indef_template = Template(indef_indef_template_text, indef_indef_template_tags)
+
+    indef_indef_lf_template = "exists x . exists y . exists a . {np1}(x) AND {np2}(y)"+\
+                    " AND {vp1}(a) AND agent(a, x) AND instrument(a, y)"
+
+    pairs += indef_indef_template.generate(indef_indef_lf_template, 0, "instr_unambig")
+
+
+    def_indef_template_text = [NAMES, vp_list,  pp_str, pp_np_list]
+    def_indef_template_tags = ["np1", "vp1", None, "np2"]
+    def_indef_template = Template(def_indef_template_text, def_indef_template_tags) 
+
+
+    def_indef_lf_template = "exists x . exists a . {np2}(x)"+\
+                    " AND {vp1}(a) AND agent(a, {np1}) AND instrument(a, x)"
+
+    pairs += def_indef_template.generate(def_indef_lf_template, 0, "pp")
+
+    return pairs
+
+def generate_unambiguous_instr_pairs():
+    visual_pairs = generate_unambiguous_instrument(vp_list=VISUAL_VPS,
+                                             pp_str="with the",
+                                             pp_np_list = VISUAL_INSTRUMENT_NPS)
+
+    tactile_pairs = generate_unambiguous_instrument(vp_list = TACTILE_VPS,
+                                                pp_str = "with the",
+                                                pp_np_list = TACTILE_INSTRUMENT_NPS)
+
+    return visual_pairs + tactile_pairs
+
+def generate_unambiguous_possession(np_list=VISUAL_INSTRUMENT_NPS):
+    """
+    Generate unambious examples of the `have` predicate with `with` surface form, e.g.
+    "the man with the telescope"
+    """
+    pairs = []
+    indef_template_text = ["the", INDEFINITE_HUMAN_NPS, "with the", np_list]
+    indef_template_tags = [None, "np1", None, "np2"]
+    indef_template = Template(indef_template_text, indef_template_tags)
+    indef_lf_template = "exists x . exists y . exists a . {np1}(x) AND {np2}(y) AND have(a)"+\
+                        " AND agent(a, x) AND patient(a, y)"
+    pairs += indef_template.generate(indef_lf_template, 0, 'possession')
+
+    def_template_text = [NAMES, "with the", np_list]
+    def_template_tags = ["np1", None, "np2"]
+    def_template = Template(def_template_text, def_template_tags)
+    def_lf_template = "exists x . exists a . {np2}(x) AND have(a)"+\
+                        " AND agent(a, {np1}) AND patient(a, x)"
+
+    pairs += def_template.generate(def_lf_template, 0, 'possession')
+    return pairs 
+
+def generate_unambiguous_possession_pairs():
+    visual_pairs = generate_unambiguous_possession(VISUAL_INSTRUMENT_NPS)
+    tactile_pairs = generate_unambiguous_possession(TACTILE_INSTRUMENT_NPS)
+    return visual_pairs + tactile_pairs 
 
 
 if __name__ == "__main__":
