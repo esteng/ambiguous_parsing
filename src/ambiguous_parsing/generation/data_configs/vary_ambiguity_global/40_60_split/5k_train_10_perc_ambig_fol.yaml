@@ -1,0 +1,96 @@
+sampler: "paired"
+out_dir: "TODO: override"
+is_fol: true 
+ordered_vars: true
+canonicalize: false
+
+train: 
+  total: 5000.0
+  perc_pp: null
+  perc_pp_ambig: 0.10
+  perc_pp_unambig: 0.90
+  pp_ratio: 0.4
+
+  perc_bound: null
+  perc_bound_ambig: 0.10
+  perc_bound_unambig: 0.90
+  bound_ratio: 0.4
+
+  perc_conj: null
+  perc_conj_ambig: 0.10
+  perc_conj_unambig: 0.90
+  conj_ratio: 0.4
+
+  perc_scope: null
+  perc_scope_ambig: 0.10
+  perc_scope_unambig: 0.90
+  scope_ratio: 0.4
+
+  perc_revscope: null
+  perc_revscope_ambig: 0.10
+  perc_revscope_unambig: 0.90
+  revscope_ratio: 0.4
+
+  perc_unambig: null
+
+dev: 
+  # dev is potentially ambiguous examples with only one interpretation attested 
+  total: 1000.0
+
+  perc_pp: null
+  perc_pp_ambig: 1.00
+  perc_pp_unambig: 0.0
+  pp_ratio: 0.0
+
+  perc_conj: null
+  perc_conj_ambig: 1.00
+  perc_conj_unambig: 0.0
+  conj_ratio: 0.0
+
+  perc_bound: null
+  perc_bound_ambig: 1.0
+  perc_bound_unambig: 0.0
+  bound_ratio: 0.0
+
+  perc_scope: null
+  perc_scope_ambig: 1.0
+  perc_scope_unambig: 0.0
+  scope_ratio: 0.0
+
+  perc_revscope: null
+  perc_revscope_ambig: 1.0
+  perc_revscope_unambig: 0.0
+  revscope_ratio: 0.0
+
+  perc_unambig: null
+
+test: 
+  # test is potentially ambiguous examples with only one interpretation attested 
+  total: 1000.0
+
+  perc_pp: null
+  perc_pp_ambig: 1.00
+  perc_pp_unambig: 0.0
+  pp_ratio: 0.0
+
+  perc_conj: null
+  perc_conj_ambig: 1.00
+  perc_conj_unambig: 0.0
+  conj_ratio: 0.0
+
+  perc_bound: null
+  perc_bound_ambig: 1.0
+  perc_bound_unambig: 0.0
+  bound_ratio: 0.0
+
+  perc_scope: null
+  perc_scope_ambig: 1.0
+  perc_scope_unambig: 0.0
+  scope_ratio: 0.0
+
+  perc_revscope: null
+  perc_revscope_ambig: 1.0
+  perc_revscope_unambig: 0.0
+  revscope_ratio: 0.0
+
+  perc_unambig: null

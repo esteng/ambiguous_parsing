@@ -36,7 +36,7 @@ train:
   perc_unambig: 1.0
 
 dev: 
-  # dev is all ambiguous pp examples with only one interpretation attested 
+  # dev is all ambiguous Conj examples with only one interpretation attested 
   total: 200.0
 
   perc_conj: 0.0
@@ -44,8 +44,8 @@ dev:
   perc_conj_unambig: 0.0
   conj_ratio: 0.0
 
-  perc_pp: 1.0
-  perc_pp_ambig: 1.00
+  perc_pp: 0.0
+  perc_pp_ambig: 0.00
   perc_pp_unambig: 0.00
   pp_ratio: 0.0
 
@@ -54,14 +54,13 @@ dev:
   perc_bound_unambig: 0.00
   bound_ratio: 0.0
 
-
   perc_scope: 0.0
   perc_scope_ambig: 0.00
   perc_scope_unambig: 0.00
   scope_ratio: 0.0
 
-  perc_revscope: 0.0
-  perc_revscope_ambig: 0.00
+  perc_revscope: 1.0
+  perc_revscope_ambig: 1.00
   perc_revscope_unambig: 0.00
   revscope_ratio: 0.0
 
@@ -69,7 +68,7 @@ dev:
 
 
 test: 
-  # test is all ambiguous pp examples with only one interpretation attested 
+  # test is all ambiguous conj examples with only one interpretation attested 
   total: 200.0
 
   perc_conj: 0.0
@@ -77,8 +76,8 @@ test:
   perc_conj_unambig: 0.0
   conj_ratio: 0.0 
 
-  perc_pp: 1.0
-  perc_pp_ambig: 1.00
+  perc_pp: 0.0
+  perc_pp_ambig: 0.00
   perc_pp_unambig: 0.00
   pp_ratio: 0.0
 
@@ -87,14 +86,13 @@ test:
   perc_bound_unambig: 0.00
   bound_ratio: 0.0
 
-
   perc_scope: 0.0
   perc_scope_ambig: 0.00
   perc_scope_unambig: 0.00
   scope_ratio: 0.0
 
-  perc_revscope: 0.0
-  perc_revscope_ambig: 0.00
+  perc_revscope: 1.0
+  perc_revscope_ambig: 1.00
   perc_revscope_unambig: 0.00
   revscope_ratio: 0.0
 
