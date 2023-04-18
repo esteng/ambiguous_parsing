@@ -16,7 +16,15 @@ from ambiguous_parsing.generation import TYPE_KEYS
 from ambiguous_parsing.generation.generate_pairs import (generate_pp_pairs, 
                                                         generate_unambiguous_basic,
                                                         generate_unambiguous_instr_pairs,
-                                                        generate_unambiguous_possession_pairs
+                                                        generate_unambiguous_possession_pairs,
+                                                        generate_conjunction_pairs,
+                                                        generate_unambiguous_conj,
+                                                        generate_unambiguous_double_conj,
+                                                        generate_scope_pairs,
+                                                        generate_reverse_scope_pairs,
+                                                        generate_unambiguous_quant_only,
+                                                        generate_unambiguous_basic,
+                                                        generate_bound_pronoun_pairs,
                                                         )
 
 
@@ -31,11 +39,29 @@ def main(cfg: DictConfig):
     unambig_instr = generate_unambiguous_instr_pairs()
     unambig_poss = generate_unambiguous_possession_pairs() 
 
-    if cfg.canonicalize:
+    conj_pairs = generate_conjunction_pairs()
+    unambig_conj = generate_unambiguous_conj()
+    unambig_double_conj = generate_unambiguous_double_conj()
+
+    scope_pairs = generate_scope_pairs()
+    revscope_pairs = generate_reverse_scope_pairs()
+
+    unambig_quant = generate_unambiguous_quant_only()
+
+    bound_pairs = generate_bound_pronoun_pairs()
+
+
+
+    if cfg.canonicalize_train:
         (pp_pairs, unambiguous, unambig_instr, unambig_poss) = rerender_data(cfg, (pp_pairs, unambiguous, unambig_instr, unambig_poss)) 
+        (conj_pairs, unambig_conj, unambig_double_conj) = rerender_data(cfg, (conj_pairs, unambig_conj, unambig_double_conj))
 
 
-    amb_unamb_data_by_key = {"pp": (pp_pairs, [])}
+    amb_unamb_data_by_key = {"pp": (pp_pairs, []),
+                             "conj": (conj_pairs, []),
+                             "scope": (scope_pairs, []),
+                             "revscope": (revscope_pairs, []),
+                             "bound": (bound_pairs, []),}
 
     # need to make sure that ambiguous pairs are in the same split
     # split into potential train/dev/test supersets
@@ -66,7 +92,7 @@ def main(cfg: DictConfig):
         unambig_nums_per_type['test'][k] = int(cfg.test[f"perc_{k}"] * cfg.test[f"perc_{k}_unambig"] * cfg.test.total)
 
     # combine everything together, no need to split since dev/test are pp only
-    unambiguous_train = unambiguous + unambig_poss + unambig_instr
+    unambiguous_train = unambiguous + unambig_poss + unambig_instr + unambig_double_conj + unambig_conj + unambig_quant 
     # unambiguous_train, unambiguous_dev, unambiguous_test = split_random(unambiguous, 
     #                                                                 n_train = len(unambiguous)
     #                                                                 n_dev = 0
@@ -84,7 +110,7 @@ def main(cfg: DictConfig):
     ratio_dict = {"train": {}, "dev": {}, "test": {}}
     for split in ['train', 'dev', 'test']:
         for key in TYPE_KEYS:
-            if key in ["unambig", "unambig_poss", "unambig_instr"]:
+            if key in ["unambig", "unambig_poss", "unambig_instr", "unambig_conj"]:
                 continue
             try:
                 ratio_dict[split][key] = cfg[split][f"{key}_ratio"]
@@ -95,11 +121,14 @@ def main(cfg: DictConfig):
 
     train = unambiguous_train 
 
-    dev = sampler.sample(ambig_data['dev'], 
+    try:    
+        dev = sampler.sample(ambig_data['dev'], 
                             unambig_data['dev'], 
                             ambig_nums_per_type['dev'], 
                             unambig_nums_per_type['dev'], 
                             ratio_dict['dev'])
+    except TypeError:
+        pdb.set_trace()
 
     test = sampler.sample(ambig_data['test'], 
                             unambig_data['test'], 

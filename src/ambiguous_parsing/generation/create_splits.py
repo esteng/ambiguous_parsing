@@ -158,7 +158,8 @@ class RatioSampler:
             ratio = ratio_dict[type_key]
             ambig_pairs = deepcopy(ambig_data[type_key])
             ambig_sampled_pairs = self.get_interpretations_by_ratio(ambig_pairs, n_ambig, ratio)
-            all_samples += ambig_sampled_pairs
+            if ambig_sampled_pairs is not None:
+                all_samples += ambig_sampled_pairs
 
         return all_samples
 

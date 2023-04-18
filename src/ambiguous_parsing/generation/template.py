@@ -111,7 +111,7 @@ class Template:
         surface = " ".join(surface)
         # check for invalid articles
         a_an_gex = re.compile(r'(^| )(a) ([aeiou])')
-        surface = re.sub(a_an_gex, r'\2n \3', surface)
+        surface = re.sub(a_an_gex, r'\1\2n \3', surface)
         return surface
 
          
