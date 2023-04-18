@@ -113,8 +113,10 @@ def get_score_data(test_data, pred_data, test_data_lut, is_fol=False):
         scores_by_type[ex_type]['pred_top_2_matches_correct'] += pred_top_2_matches_correct
         scores_by_type[ex_type]['pred_top_1_matches_other'] += pred_top_1_matches_other
         scores_by_type[ex_type]['pred_top_2_matches_other'] += pred_top_2_matches_other
-        scores_by_type[ex_type]['pred_top_1_matches_0'] += pred_top_1_matches_0
-        scores_by_type[ex_type]['pred_top_1_matches_1'] += pred_top_1_matches_1
+        scores_by_type[ex_type]['pred_top_1_matches_either'] += pred_top_1_matches_correct or pred_top_1_matches_other
+
+        # scores_by_type[ex_type]['pred_top_1_matches_0'] += pred_top_1_matches_0
+        # scores_by_type[ex_type]['pred_top_1_matches_1'] += pred_top_1_matches_1
         scores_by_type[ex_type]['correct_in_top_k'] += correct_in_top_k
         scores_by_type[ex_type]['other_in_top_k'] += other_in_top_k
         scores_by_type[ex_type]['total'] += 1
@@ -125,7 +127,15 @@ def get_score_data(test_data, pred_data, test_data_lut, is_fol=False):
 
     return scores_by_type
 
-def get_df(test_file, eval_file, pred_file, is_fol):
+def get_df(test_file, eval_file, pred_path, is_fol):
+    if str(pred_path).endswith(".jsonl"):
+        pred_file = pred_path
+    else:
+        pred_path = pathlib.Path(pred_path)
+        # list the files alphabetically and take the last one
+        pred_files = sorted(pred_path.glob("*.jsonl"))
+        pred_file = pred_files[-1]
+
     test_data = read_jsonl(test_file)
     eval_data = read_jsonl(eval_file)
     pred_data = read_jsonl(pred_file)
