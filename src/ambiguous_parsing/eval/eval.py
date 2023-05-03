@@ -6,16 +6,14 @@ from collections import defaultdict
 
 import pandas as pd 
 
-from ambiguous_parsing.tree.formula import FOLFormula, LispFormula
+from ambiguous_parsing.eval.utils import (
+    read_jsonl, 
+    safe_divide, 
+    rerender,
+    convert_benchclamp_pred,
+    convert_benchclamp_gold,
+)
 
-def read_jsonl(path):
-    with open(path, "r") as f:
-        return [json.loads(line) for line in f]
-
-def safe_divide(a,b):
-    if b == 0:
-        return 0
-    return a/b
 
 def format_report(scores_by_type):
     for ex_type, score_dict in scores_by_type.items():
@@ -41,89 +39,68 @@ def format_report(scores_by_type):
         print(f"\tother_in_top_k: {other_in_top_k} / {total} = {safe_divide(other_in_top_k, total) *100:.2f}")
         print("=====================================")
 
-def rerender(lf: str, is_fol: bool = False) -> str:
-    if is_fol:
-        formula = FOLFormula.parse_formula(lf) 
-    else:
-        formula = LispFormula.parse_formula(lf)
-        # cast to FOLFormula, more readable 
-        formula = FOLFormula.from_formula(formula)
-
-    return formula.render()
-
-def get_score_data(test_data, pred_data, test_data_lut, is_fol=False):
+def get_score_data(test_data, pred_data, test_data_lut, is_fol=False, convert = True):
     scores_by_type = defaultdict(lambda: defaultdict(int))
     missing_second = 0
     missing_first = 0
+
+    if convert:
+        test_data = convert_benchclamp_gold(test_data, test_data_lut, is_fol=is_fol)
+        pred_data = convert_benchclamp_pred(pred_data, is_fol=is_fol)
+
     for datum_idx, (test_datum, pred_datum) in enumerate(zip(test_data,  pred_data)):
         # go through and get the predictions
-        top_k_outputs = pred_datum['outputs']
-        for i, output in enumerate(top_k_outputs):
-            try:
-                output = rerender(output, is_fol)
-                top_k_outputs[i] = output
-            except (ValueError, IndexError, AssertionError, KeyError) as e:
-                pass 
+        top_k_outputs = pred_datum['top_k_preds']
 
-        cand_lfs = test_data_lut[test_datum['surface']]
+        lf_0, lf_1 = test_datum['lf0'], test_datum['lf1']
         ex_type = test_datum['type']
-        correct_lf_idx = test_datum['template_idx']
-        correct_lf = cand_lfs[correct_lf_idx]['lf']
-
-        correct_lf = rerender(correct_lf, is_fol)
-        try:
-            other_lf = cand_lfs[1 - correct_lf_idx]['lf'] 
-            other_lf = rerender(other_lf, is_fol)
-        except (IndexError, ValueError, AssertionError, KeyError) as e:
-            #pdb.set_trace()
-            assert(len(cand_lfs) == 1)
-            other_lf = None
-
-        # if pred_datum['metrics']['exact_match/rank1'] == "correct":
-        #     pdb.set_trace()
 
         # do checks 
-        try:
-            pred_top_1_matches_correct = top_k_outputs[0] == correct_lf
-            pred_top_1_matches_other = top_k_outputs[0] == other_lf
-            pred_top_1_matches_0 = top_k_outputs[0] == cand_lfs[0]['lf']
-            if other_lf is not None:
-                pred_top_1_matches_1 = top_k_outputs[0] == cand_lfs[1]['lf']
-            else:
-                pred_top_1_matches_1 = False
-        except IndexError:
+        if len(top_k_outputs) == 0:
             missing_first += 1
-            pred_top_1_matches_correct = False
-            pred_top_1_matches_other = False
-            pred_top_1_matches_0 = False
-            pred_top_1_matches_1 = False
+            pred_top_1_matches_lf_0 = False
+            pred_top_1_matches_lf_1 = False
+            lf_1 = None
+        else:
+            pred_top_1_matches_lf_0 = top_k_outputs[0] == lf_0
+
+        if lf_1 is not None:
+            pred_top_1_matches_lf_1 = top_k_outputs[0] == lf_1
+        else:
+            pred_top_1_matches_lf_1 = False
         try:
-            pred_top_2_matches_correct = top_k_outputs[1] == correct_lf
-            pred_top_2_matches_other = top_k_outputs[1] == other_lf
+            pred_top_2_matches_lf_0 = top_k_outputs[1] == lf_0
+            pred_top_2_matches_lf_1 = top_k_outputs[1] == lf_1
         except IndexError:
             missing_second += 1
             # no second output
-            pred_top_2_matches_correct = False
-            pred_top_2_matches_other = False
+            pred_top_2_matches_lf_0 = False
+            pred_top_2_matches_lf_1 = False
 
-        correct_in_top_k = correct_lf in top_k_outputs
-        other_in_top_k = other_lf in top_k_outputs
+        lf_0_in_top_k = lf_0 in top_k_outputs
+        lf_1_in_top_k = lf_1 in top_k_outputs
         # update scores by type
-        scores_by_type[ex_type]['pred_top_1_matches_correct'] += pred_top_1_matches_correct
-        scores_by_type[ex_type]['pred_top_2_matches_correct'] += pred_top_2_matches_correct
-        scores_by_type[ex_type]['pred_top_1_matches_other'] += pred_top_1_matches_other
-        scores_by_type[ex_type]['pred_top_2_matches_other'] += pred_top_2_matches_other
-        scores_by_type[ex_type]['pred_top_1_matches_either'] += pred_top_1_matches_correct or pred_top_1_matches_other
+        scores_by_type[ex_type]['pred_top_1_matches_lf_0'] += pred_top_1_matches_lf_0
+        scores_by_type[ex_type]['pred_top_2_matches_lf_0'] += pred_top_2_matches_lf_0
+        scores_by_type[ex_type]['pred_top_1_matches_lf_1'] += pred_top_1_matches_lf_1
+        scores_by_type[ex_type]['pred_top_2_matches_lf_1'] += pred_top_2_matches_lf_1
+        scores_by_type[ex_type]['pred_top_1_matches_either'] += pred_top_1_matches_lf_0 or pred_top_1_matches_lf_1
 
-        # scores_by_type[ex_type]['pred_top_1_matches_0'] += pred_top_1_matches_0
-        # scores_by_type[ex_type]['pred_top_1_matches_1'] += pred_top_1_matches_1
-        scores_by_type[ex_type]['correct_in_top_k'] += correct_in_top_k
-        scores_by_type[ex_type]['other_in_top_k'] += other_in_top_k
+        scores_by_type[ex_type]['lf_0_in_top_k'] += lf_0_in_top_k
+        scores_by_type[ex_type]['lf_1_in_top_k'] += lf_1_in_top_k
         scores_by_type[ex_type]['total'] += 1
 
             
     print(f"{missing_first} = {missing_first / len(pred_data) * 100 :.2f} are missing a first output")
     print(f"{missing_second} = {missing_second / len(pred_data) * 100 :.2f} are missing a second output")
+
+    # divide everything by the total
+    for k, v in scores_by_type.items():
+        for k2, v2 in v.items():
+            if k2 == "total":
+                continue
+            v[k2] = safe_divide(v2, v['total']) * 100
+        scores_by_type[k] = v 
 
     return scores_by_type
 
@@ -141,9 +118,9 @@ def get_df(test_file, eval_file, pred_path, is_fol):
     pred_data = read_jsonl(pred_file)
 
     # make test data lookup 
-    test_data_lut = defaultdict(list)
+    test_data_lut = defaultdict(dict)
     for datum in eval_data:
-        test_data_lut[datum['surface']].append(datum)
+        test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
     assert(len(test_data) == len(pred_data))
 
     scores_by_type = get_score_data(test_data, pred_data, test_data_lut, is_fol)
@@ -166,9 +143,9 @@ if __name__ == "__main__":
     pred_data = read_jsonl(args.pred_file)
 
     # make test data lookup 
-    test_data_lut = defaultdict(list)
+    test_data_lut = defaultdict(dict)
     for datum in eval_data:
-        test_data_lut[datum['surface']].append(datum)
+        test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
     assert(len(test_data) == len(pred_data))
 
     scores_by_type = get_score_data(test_data, pred_data, test_data_lut, args.is_fol)
