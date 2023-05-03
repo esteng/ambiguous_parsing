@@ -163,7 +163,7 @@ def generate_conjunction_pairs():
     and_first_template = Template(and_first_template_text, and_first_template_tags)
 
     and_first_lf_template_1 = "exists x . exists a . exists e . exists i . {np1}(x) AND {vp1}(a) AND agent(a, x) AND ( ( {vp2}(e) AND agent(e, x) ) OR ( {vp3}(i) AND agent(i, x) ) )"
-    and_first_lf_template_2 = "exists x . exists a . exists e . exists i . ( {np1}(x) AND {vp1}(a) AND agent(a, x) AND {vp2}(e) AND agent(e, x) ) OR ( {vp3}(i) AND agent(i, x) )"
+    and_first_lf_template_2 = "exists x . exists a . exists e . exists i . {np1}(x) AND ( {vp1}(a) AND agent(a, x) AND {vp2}(e) AND agent(e, x) ) OR ( {vp3}(i) AND agent(i, x) )"
 
     pairs += and_first_template.generate(and_first_lf_template_1, 0, "conj")
     pairs += and_first_template.generate(and_first_lf_template_2, 1, "conj")
@@ -173,8 +173,8 @@ def generate_conjunction_pairs():
 
     or_first_template = Template(or_first_template_text, or_first_template_tags)
 
-    or_first_lf_template_1 = "exists x . exists a . exists e . exists i . ( ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) ) ) AND {vp3}(i) AND agent(i, x)" 
-    or_first_lf_template_2 = "exists x . exists a . exists e . exists i . ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) AND {vp3}(i) AND agent(i, x) )"
+    or_first_lf_template_1 = "exists x . exists a . exists e . exists i . {np1}(x) AND ( ( {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) ) ) AND {vp3}(i) AND agent(i, x)" 
+    or_first_lf_template_2 = "exists x . exists a . exists e . exists i . {np1}(x) AND ( {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) AND {vp3}(i) AND agent(i, x) )"
 
     pairs += or_first_template.generate(or_first_lf_template_1, 0, "conj")
     pairs += or_first_template.generate(or_first_lf_template_2, 1, "conj")
@@ -497,7 +497,7 @@ def generate_unambiguous_conj():
     disj_indef_intransitive_text = ['the', INDEFINITE_SENTIENT_NPS, INTRANSITIVE_VPS + INTRANSITIVE_VPS_FOR_BOUND, "or", INTRANSITIVE_VPS + INTRANSITIVE_VPS_FOR_BOUND]
     disj_indef_intransitive_tags = [None, 'np1', 'vp1', None, "vp2"]
     disj_indef_intransitive_template = Template(disj_indef_intransitive_text, disj_indef_intransitive_tags)
-    disj_indef_intransitive_lf_template = "exists x . exists a . exists e . ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) )"
+    disj_indef_intransitive_lf_template = "exists x . exists a . exists e . {np1}(x) AND ( {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) )"
     pairs += disj_indef_intransitive_template.generate(disj_indef_intransitive_lf_template, 0, "unambig")
 
     disj_def_intransitive_text = [NAMES, INTRANSITIVE_VPS + INTRANSITIVE_VPS_FOR_BOUND, "or", INTRANSITIVE_VPS + INTRANSITIVE_VPS_FOR_BOUND]
@@ -520,7 +520,7 @@ def generate_unambiguous_double_conj():
     and_template = Template(and_template_text, and_first_template_tags)
 
     and_first_lf_template_1 = "exists x . exists a . exists e . exists i . {np1}(x) AND {vp1}(a) AND agent(a, x) AND ( ( {vp2}(e) AND agent(e, x) ) AND ( {vp3}(i) AND agent(i, x) ) )"
-    and_first_lf_template_2 = "exists x . exists a . exists e . exists i . ( {np1}(x) AND {vp1}(a) AND agent(a, x) AND {vp2}(e) AND agent(e, x) ) AND {vp3}(i) AND agent(i, x)"
+    and_first_lf_template_2 = "exists x . exists a . exists e . exists i . {np1}(x) AND ( {vp1}(a) AND agent(a, x) AND {vp2}(e) AND agent(e, x) ) AND {vp3}(i) AND agent(i, x)"
 
     pairs += and_template.generate(and_first_lf_template_1, 0, "unambig_conj")
     pairs += and_template.generate(and_first_lf_template_2, 1, "unambig_conj")
@@ -530,8 +530,8 @@ def generate_unambiguous_double_conj():
 
     or_template = Template(or_template_text, or_template_tags)
 
-    or_lf_template_1 = "exists x . exists a . exists e . exists i . ( ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) ) ) OR ( {vp3}(i) AND agent(i, x) )" 
-    or_lf_template_2 = "exists x . exists a . exists e . exists i . ( {np1}(x) AND {vp1}(a) AND agent(a, x) ) OR ( ( {vp2}(e) AND agent(e, x) ) OR ( {vp3}(i) AND agent(i, x) ) )"
+    or_lf_template_1 = "exists x . exists a . exists e . exists i . {np1}(x) ( ( AND {vp1}(a) AND agent(a, x) ) OR ( {vp2}(e) AND agent(e, x) ) ) OR ( {vp3}(i) AND agent(i, x) )" 
+    or_lf_template_2 = "exists x . exists a . exists e . exists i . {np1}(x) ( AND {vp1}(a) AND agent(a, x) ) OR ( ( {vp2}(e) AND agent(e, x) ) OR ( {vp3}(i) AND agent(i, x) ) )"
 
     pairs += or_template.generate(or_lf_template_1, 0, "unambig_conj")
     pairs += or_template.generate(or_lf_template_2, 1, "unambig_conj")
