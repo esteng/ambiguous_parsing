@@ -17,11 +17,11 @@ class FewshotDatasetMetric(DatasetMetric):
     def __call__(self, 
                 pred_data: List[Any], 
                 gold_data: List[Any], 
-                gold_data_lut: Dict[str, Any], 
                 ratio: float, 
                 is_fol: bool = True):
 
-        scores_by_type = get_score_data(gold_data, pred_data, gold_data_lut, is_fol=is_fol, convert=False)
+        scores_by_type = get_score_data(gold_data, pred_data, gold_data_lut=None, is_fol=is_fol, convert=False)
+
         for ex_type, data_dict in scores_by_type.items():
             for key, count in data_dict.items():
                 self.df_data.append({"ratio": ratio, "type": ex_type, "key": key, "value": count})
@@ -31,8 +31,8 @@ class FewshotDatasetMetric(DatasetMetric):
         metric_dict = defaultdict(list)
         df = pd.DataFrame(self.df_data)
         # take average for each ratio across for key = "pred_top_1_matches_lf_0"
-        for ratio in self.df["ratio"].unique():
-            for amb_type in self.df["type"].unique():
+        for ratio in df["ratio"].unique():
+            for amb_type in df["type"].unique():
                 sub_df = df[df['ratio'] == ratio]
                 sub_df = sub_df[sub_df['type'] == amb_type]
                 lf0_df = sub_df[sub_df['key'] == 'pred_top_1_matches_lf_0']
@@ -86,8 +86,10 @@ class FewshotInstanceMetric(InstanceMetric):
             for amb_type in df["type"].unique():
                 sub_df = df[df['ratio'] == ratio]
                 sub_df = sub_df[sub_df['type'] == amb_type]
-                sub_df['diff'] = np.abs(sub_df['ratio'] - sub_df['pred_p_lf0'])
-                metric_dict[amb_type].append(sub_df['diff'].mean())
+                diff = sub_df['ratio'] - sub_df['pred_p_lf0']
+                sub_df['se'] = diff**2
+               
+                metric_dict[amb_type].append(sub_df['se'].mean())
         metric_dict = {k: np.mean(v) for k,v in metric_dict.items()}
         return metric_dict
 
@@ -145,9 +147,9 @@ if __name__ == "__main__":
 
         print(metric.get_metric())
     else: 
-        metric = FewshotInstanceMetric()
 
         for model in ["codegen-350M", "codegen-2B", "codegen-6B", "codegen-16B"]:
+            metric = FewshotInstanceMetric()
             for s1 in range(0, 110, 10):
                 s2 = 100 - s1
 
@@ -158,7 +160,7 @@ if __name__ == "__main__":
                     test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
                     
                 path = f"/brtx/602-nvme1/estengel/ambiguous_parsing/model_outputs/{model}/{s1}-{s2}-5k-train-100-perc-ambig_fol_fewshot/outputs/test_eval.logits"
-                print(f"reading {path}")
+                # print(f"reading {path}")
                 try:
                     data_by_src = read_logits_file(path)
                 except FileNotFoundError:
@@ -166,5 +168,5 @@ if __name__ == "__main__":
                     continue
 
                 metric(data_by_src, test_data_lut, ratio = s1/100)
-
-        print(metric.get_metric())
+            print(f"model: {model}")
+            print(metric.get_metric())
