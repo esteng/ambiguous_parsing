@@ -91,3 +91,13 @@ def detokenize(tokenizer,
     new_toks = str_toks[1:]
     new_toks = [re.sub(delimiter, "", "".join(tok)) for tok in new_toks]
     return top_logits, new_toks
+
+def detect_amb_type(inp_str):
+    if inp_str.startswith("every") or inp_str.startswith('each'):
+        return "scope"
+    elif "every" in inp_str or "each" in inp_str:
+        return "revscope"
+    elif "with the" in inp_str:
+        return "pp"
+    else:
+        return "bound"
