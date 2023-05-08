@@ -46,12 +46,19 @@ def convert_benchclamp_gold(gold_data, gold_data_lut, is_fol: bool = False):
     """
     # format: each line has lf0 and lf1 
     to_ret = []
+    sniff_datum = gold_data[0]
+    if "surface" in sniff_datum.keys():
+        src_key = "surface"
+        tgt_key = "lf"
+    else:
+        src_key = "utterance"
+        tgt_key = "plan"
     for gold_datum in gold_data: 
-        cand_lfs = gold_data_lut[gold_datum['surface']]
-        lf_0 = cand_lfs['0']['lf']
+        cand_lfs = gold_data_lut[gold_datum[src_key]]
+        lf_0 = cand_lfs['0'][tgt_key]
         lf_0 = rerender(lf_0, is_fol)
         if len(cand_lfs) == 2:
-            lf_1 = cand_lfs['1']['lf']
+            lf_1 = cand_lfs['1'][tgt_key]
             lf_1 = rerender(lf_1, is_fol)
         else:
             lf_1 = None
