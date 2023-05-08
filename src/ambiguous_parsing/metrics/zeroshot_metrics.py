@@ -114,7 +114,7 @@ class ZeroshotDatasetMetric(DatasetMetric):
             if checkpoint_dir is not None:
                 pred_path = checkpoint_dir / path
             else:
-                pred_path = path
+                pred_path = Path(path)
 
             if str(pred_path).endswith(".jsonl"):
                 pred_file = pred_path

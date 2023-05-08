@@ -47,6 +47,51 @@ class FewshotDatasetMetric(DatasetMetric):
         metric_dict = {k:np.mean(v) for k, v in metric_dict.items()}
 
         return metric_dict
+    
+    @staticmethod
+    def from_bclamp_dir(models_and_paths: List[Tuple[str, str]],
+                        fol_test_path: str,
+                        fol_eval_path: str,
+                        checkpoint_dir: str = None,
+                        is_fol: bool = True):
+        
+        if checkpoint_dir is not None:
+            checkpoint_dir = Path(checkpoint_dir)
+
+        metric = FewshotDatasetMetric()
+        for model_name, path in models_and_paths:
+            if checkpoint_dir is not None:
+                pred_path = CHECKPOINT_DIR / path
+            else:
+                pred_path = Path(path)
+
+            ratio = int(model_name.split("-")[0])
+
+            if str(pred_path).endswith(".jsonl"):
+                pred_file = pred_path
+            else:
+                pred_path = Path(pred_path)
+                # list the files alphabetically and take the last one
+                pred_files = sorted(pred_path.glob("*.jsonl"))
+                pred_file = pred_files[-1]
+
+            test_data = read_jsonl(fol_test_path)
+            eval_data = read_jsonl(fol_eval_path)
+            pred_data = read_jsonl(pred_file)
+
+
+            # make test data lookup 
+            test_data_lut = defaultdict(dict)
+            for datum in eval_data:
+                test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
+            assert(len(test_data) == len(pred_data))
+
+            test_data = convert_benchclamp_gold(test_data, test_data_lut, is_fol=is_fol)
+            pred_data = convert_benchclamp_pred(pred_data, is_fol=is_fol)
+
+            metric(pred_data, test_data, test_data_lut, ratio = ratio/100, is_fol=is_fol)
+
+        return metric.get_metric()
 
 class FewshotInstanceMetric(InstanceMetric):
     def __init__(self):
@@ -93,6 +138,27 @@ class FewshotInstanceMetric(InstanceMetric):
         metric_dict = {k: np.mean(v) for k,v in metric_dict.items()}
         return metric_dict
 
+    def from_bclamp_paths(paired_paths: List):
+        """
+        paired_paths: List[Tuple[fol_eval_path, logits_path, s1]]
+        """
+        metric = FewshotInstanceMetric()
+        for fol_eval_path, logits_path, s1 in paired_paths:
+            eval_data = read_jsonl(fol_eval_path)
+            test_data_lut = defaultdict(dict)
+            for datum in eval_data:
+                test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
+            try:
+                data_by_src = read_logits_file(logits_path)
+            except FileNotFoundError:
+                print(f"file not found: {logits_path}")
+                continue
+
+            metric(data_by_src, test_data_lut, ratio = s1/100)
+
+        return metric.get_metric()
+
+
 if __name__ == "__main__":
     fewshot = False
 
@@ -115,58 +181,22 @@ if __name__ == "__main__":
         fol_test_path = "/brtx/602-nvme1/estengel/ambiguous_parsing/data/raw/50-50-5k-train-100-perc-ambig_fol/test.jsonl"
         fol_eval_path = "/brtx/602-nvme1/estengel/ambiguous_parsing/data/raw/50-50-5k-train-100-perc-ambig_fol/test_eval.jsonl"
 
-        metric = FewshotDatasetMetric()
+        metric_dict = FewshotDatasetMetric.from_bclamp_dir(fol_models_and_paths, 
+                                                           fol_test_path, 
+                                                           fol_eval_path,
+                                                           CHECKPOINT_DIR,
+                                                           is_fol=True)
 
-        for model_name, path in fol_models_and_paths:
-            pred_path = CHECKPOINT_DIR / path
-            ratio = int(model_name.split("-")[0])
-
-            if str(pred_path).endswith(".jsonl"):
-                pred_file = pred_path
-            else:
-                pred_path = Path(pred_path)
-                # list the files alphabetically and take the last one
-                pred_files = sorted(pred_path.glob("*.jsonl"))
-                pred_file = pred_files[-1]
-
-            test_data = read_jsonl(fol_test_path)
-            eval_data = read_jsonl(fol_eval_path)
-            pred_data = read_jsonl(pred_file)
-
-
-            # make test data lookup 
-            test_data_lut = defaultdict(dict)
-            for datum in eval_data:
-                test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
-            assert(len(test_data) == len(pred_data))
-
-            test_data = convert_benchclamp_gold(test_data, test_data_lut, is_fol=True)
-            pred_data = convert_benchclamp_pred(pred_data, is_fol=True)
-
-            metric(pred_data, test_data, test_data_lut, ratio = ratio/100, is_fol=True)
-
-        print(metric.get_metric())
     else: 
 
         for model in ["codegen-350M", "codegen-2B", "codegen-6B", "codegen-16B"]:
-            metric = FewshotInstanceMetric()
+            paired_paths = []
             for s1 in range(0, 110, 10):
                 s2 = 100 - s1
 
                 fol_eval_path = f"/brtx/602-nvme1/estengel/ambiguous_parsing/data/raw/{s1}-{s2}-5k-train-100-perc-ambig_fol/test_eval.jsonl"
-                eval_data = read_jsonl(fol_eval_path)
-                test_data_lut = defaultdict(dict)
-                for datum in eval_data:
-                    test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
-                    
-                path = f"/brtx/602-nvme1/estengel/ambiguous_parsing/model_outputs/{model}/{s1}-{s2}-5k-train-100-perc-ambig_fol_fewshot/outputs/test_eval.logits"
-                # print(f"reading {path}")
-                try:
-                    data_by_src = read_logits_file(path)
-                except FileNotFoundError:
-                    print(f"file not found: {path}")
-                    continue
-
-                metric(data_by_src, test_data_lut, ratio = s1/100)
-            print(f"model: {model}")
-            print(metric.get_metric())
+                logits_path = f"/brtx/602-nvme1/estengel/ambiguous_parsing/model_outputs/{model}/{s1}-{s2}-5k-train-100-perc-ambig_fol_fewshot/outputs/test_eval.logits"
+                paired_paths.append((fol_eval_path, logits_path, s1))
+            
+            metric_dict = FewshotInstanceMetric.from_bclamp_paths(paired_paths)
+            print(f"model: {model}, metric: {metric_dict}")

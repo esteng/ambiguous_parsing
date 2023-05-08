@@ -52,6 +52,8 @@ def get_score_data(test_data, pred_data, test_data_lut, is_fol=False, convert = 
         # go through and get the predictions
         top_k_outputs = pred_datum['top_k_preds']
 
+        
+
         lf_0, lf_1 = test_datum['lf0'], test_datum['lf1']
         ex_type = test_datum['type']
 
@@ -77,8 +79,6 @@ def get_score_data(test_data, pred_data, test_data_lut, is_fol=False, convert = 
             pred_top_2_matches_lf_0 = False
             pred_top_2_matches_lf_1 = False
 
-        lf_0_in_top_k = lf_0 in top_k_outputs
-        lf_1_in_top_k = lf_1 in top_k_outputs
         # update scores by type
         scores_by_type[ex_type]['pred_top_1_matches_lf_0'] += pred_top_1_matches_lf_0
         scores_by_type[ex_type]['pred_top_2_matches_lf_0'] += pred_top_2_matches_lf_0
@@ -86,8 +86,14 @@ def get_score_data(test_data, pred_data, test_data_lut, is_fol=False, convert = 
         scores_by_type[ex_type]['pred_top_2_matches_lf_1'] += pred_top_2_matches_lf_1
         scores_by_type[ex_type]['pred_top_1_matches_either'] += pred_top_1_matches_lf_0 or pred_top_1_matches_lf_1
 
-        scores_by_type[ex_type]['lf_0_in_top_k'] += lf_0_in_top_k
-        scores_by_type[ex_type]['lf_1_in_top_k'] += lf_1_in_top_k
+        if len(top_k_outputs) > 1:
+            for k in range(2, len(top_k_outputs)):
+                lf_0_in_top_k = lf_0 in top_k_outputs[0:k]
+                lf_1_in_top_k = lf_1 in top_k_outputs[0:k]
+
+                scores_by_type[ex_type][f'lf_0_in_top_{k}'] += lf_0_in_top_k
+                scores_by_type[ex_type][f'lf_1_in_top_{k}'] += lf_1_in_top_k
+
         scores_by_type[ex_type]['total'] += 1
 
             
@@ -104,7 +110,7 @@ def get_score_data(test_data, pred_data, test_data_lut, is_fol=False, convert = 
 
     return scores_by_type
 
-def get_df(test_file, eval_file, pred_path, is_fol):
+def get_df(test_file, eval_file, pred_path, is_fol, take_subset_by_src: bool = False):
     if str(pred_path).endswith(".jsonl"):
         pred_file = pred_path
     else:
@@ -118,9 +124,19 @@ def get_df(test_file, eval_file, pred_path, is_fol):
     pred_data = read_jsonl(pred_file)
 
     # make test data lookup 
+    sniff_datum = eval_data[0]
+    if "surface" in sniff_datum.keys():
+        key = 'surface'
+    else:
+        key = "utterance"
+    if take_subset_by_src:
+        test_src_utts = [datum[key] for datum in test_data]
+        print(pred_data[0].keys())
+        pred_data = [datum for datum in pred_data if datum['test_datum_natural'] in test_src_utts]
+
     test_data_lut = defaultdict(dict)
     for datum in eval_data:
-        test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
+        test_data_lut[datum[key]][str(datum['template_idx'])] = datum
     assert(len(test_data) == len(pred_data))
 
     scores_by_type = get_score_data(test_data, pred_data, test_data_lut, is_fol)
