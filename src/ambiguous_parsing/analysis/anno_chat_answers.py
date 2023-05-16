@@ -24,7 +24,10 @@ def main(args):
                 continue
 
             outputs = line["outputs"]
-            top_output = outputs[0]
+            try:
+                top_output = outputs[0]
+            except IndexError:
+                print(f"Index error: {outputs}")
             if not (top_output.startswith("forall") or top_output.startswith("exists")):
                 print()
                 print(f"INPUT: {line['test_datum_natural']}")
