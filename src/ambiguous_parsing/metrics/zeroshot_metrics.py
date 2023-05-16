@@ -45,13 +45,15 @@ class ZeroshotDatasetMetric(DatasetMetric):
                 # pad 
                 top_k_outputs = top_k_outputs + ['' for _ in range(5 - len(top_k_outputs))]
 
-            for k in range(0, len(top_k_outputs)):
+            for k in range(0, len(top_k_outputs)+1):
                 lf_0_in_top_k = lf_0 in top_k_outputs[0:k]
                 lf_1_in_top_k = lf_1 in top_k_outputs[0:k]
+
 
                 scores_by_type[ex_type][f'lf_0_in_top_{k}'].append(lf_0_in_top_k)
                 scores_by_type[ex_type][f'lf_1_in_top_{k}'].append(lf_1_in_top_k) 
 
+                
         return scores_by_type
 
     def safe_mean(self, arr: np.array):
@@ -69,91 +71,112 @@ class ZeroshotDatasetMetric(DatasetMetric):
 
         # take average for each ratio across for key = "pred_top_1_matches_lf_0"
         for amb_type in df["amb_type"].unique():
-            for amb_type in df["type"].unique():
-                sub_df = df[df['amb_type'] == amb_type]
-                sub_df = sub_df[sub_df['type'] == amb_type]
-                lf0_df = sub_df[sub_df['key'] == lf0_key]
-                lf1_df = sub_df[sub_df['key'] == lf1_key]
-                lf0_vals = lf0_df['value'].astype(int).to_numpy()
-                lf1_vals = lf1_df['value'].astype(int).to_numpy()
+            sub_df = df[df['amb_type'] == amb_type]
+            sub_df = sub_df[sub_df['type'] == amb_type]
+            lf0_df = sub_df[sub_df['key'] == lf0_key]
+            lf1_df = sub_df[sub_df['key'] == lf1_key]
+            lf0_vals = lf0_df['value'].astype(int).to_numpy()
+            lf1_vals = lf1_df['value'].astype(int).to_numpy()
 
-                assert(np.all(lf0_df['idx'].to_numpy() == lf1_df['idx'].to_numpy()))
+            assert(np.all(lf0_df['idx'].to_numpy() == lf1_df['idx'].to_numpy()))
 
-                if self.either:
-                    metric_val = lf0_vals + lf1_vals
-                else:
-                    metric_val = lf0_vals * lf1_vals
+            if self.either:
+                metric_val = lf0_vals + lf1_vals
+            else:
+                metric_val = lf0_vals * lf1_vals
 
-                metric_val = self.safe_mean(metric_val)
+            metric_val = self.safe_mean(metric_val)
 
-                metric_dict[amb_type].append(metric_val)
+            metric_dict[amb_type].append(metric_val)
 
         metric_dict = {k:self.safe_mean(v) for k, v in metric_dict.items()}
 
         return metric_dict
 
     @staticmethod
-    def from_bclamp_dirs(models_and_paths: List[Tuple[str]], 
+    def from_bclamp_dirs(models_and_paths: Dict[str, List[Tuple[str]]], 
                      checkpoint_dir: str = None,
                      k: int = 1,
                      either: bool = True,
                      is_fol: bool = True):
         """
         models_and_paths: List
-            format: [(amb_type, path), ...)]
+            format: {model: [(amb_type, path), ...)]...}
         """
 
-        big_metric_dict = {}
+        big_metric_dict = defaultdict(dict)
         if checkpoint_dir is not None:
             checkpoint_dir = Path(checkpoint_dir)
-        for amb_type, path in models_and_paths:
+        for model, per_model_data in models_and_paths.items():
             either_metric = ZeroshotDatasetMetric(either=either)
-            fol_test_path = f"/brtx/602-nvme1/estengel/ambiguous_parsing/data/raw/generalization/{amb_type}_fol/test.jsonl"
-            fol_eval_path = f"/brtx/602-nvme1/estengel/ambiguous_parsing/data/raw/generalization/{amb_type}_fol/test_eval.jsonl"
+            for amb_type, path in per_model_data:
+                fol_test_path = f"/brtx/602-nvme1/estengel/ambiguous_parsing/data/raw/generalization/{amb_type}_fol/test.jsonl"
+                fol_eval_path = f"/brtx/602-nvme1/estengel/ambiguous_parsing/data/raw/generalization/{amb_type}_fol/test_eval.jsonl"
 
-            if checkpoint_dir is not None:
-                pred_path = checkpoint_dir / path
-            else:
-                pred_path = Path(path)
+                if checkpoint_dir is not None:
+                    pred_path = checkpoint_dir / path
+                else:
+                    pred_path = Path(path)
 
-            if str(pred_path).endswith(".jsonl"):
-                pred_file = pred_path
-            else:
-                pred_path = Path(pred_path)
-                # list the files alphabetically and take the last one
-                pred_files = sorted(pred_path.glob("*.jsonl"))
-                pred_file = pred_files[-1]
+                try:
+                    if str(pred_path).endswith(".jsonl"):
+                        pred_file = pred_path
+                    else:
+                        pred_path = Path(pred_path)
+                        # list the files alphabetically and take the last one
+                        pred_files = sorted(pred_path.glob("*.jsonl"))
+                        pred_file = pred_files[-1]
+                except IndexError:
+                    print(f"Skipping {model} {amb_type} because no files found")
+                    continue
 
-            test_data = read_jsonl(fol_test_path)
-            eval_data = read_jsonl(fol_eval_path)
-            pred_data = read_jsonl(pred_file)
+                test_data = read_jsonl(fol_test_path)
+                eval_data = read_jsonl(fol_eval_path)
+                pred_data = read_jsonl(pred_file)
 
 
-            # make test data lookup 
-            test_data_lut = defaultdict(dict)
-            for datum in eval_data:
-                test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
-            assert(len(test_data) == len(pred_data))
+                # make test data lookup 
+                test_data_lut = defaultdict(dict)
+                for datum in eval_data:
+                    test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
+                try:
+                    assert(len(test_data) == len(pred_data))
+                except AssertionError:
+                    print(f"Skipping {model} {amb_type} because len(test_data) != len(pred_data)")
+                    continue
 
-            test_data = convert_benchclamp_gold(test_data, test_data_lut, is_fol=is_fol)
-            pred_data = convert_benchclamp_pred(pred_data, is_fol=is_fol)
+                test_data = convert_benchclamp_gold(test_data, test_data_lut, is_fol=is_fol)
+                pred_data = convert_benchclamp_pred(pred_data, is_fol=is_fol)
+                either_metric(pred_data, test_data, amb_type, is_fol=is_fol)
 
-            either_metric(pred_data, test_data, amb_type, is_fol=is_fol)
             metric_val = either_metric.get_metric(k=k)
-            big_metric_dict[amb_type] = metric_val
+            big_metric_dict[model] = metric_val
         return big_metric_dict
 
 
 if __name__ == "__main__":
     CHECKPOINT_DIR= Path("/brtx/602-nvme1/estengel/ambiguous_parsing/logs/1.0/") 
     # fol
-    for model in ["350M", "2B", "6B", "16B"]:
-        fol_models_and_paths = [("pp", f"codegen-{model}_lamp_no_context_all_pp_fol_0_test_eval_constrained_bs_5_np_full"),
-        ("scope", f"codegen-{model}_lamp_no_context_all_scope_fol_0_test_eval_constrained_bs_5_np_full"),
-        ("revscope", f"codegen-{model}_lamp_no_context_all_revscope_fol_0_test_eval_constrained_bs_5_np_full"),
-        ("bound", f"codegen-{model}_lamp_no_context_all_bound_fol_0_test_eval_constrained_bs_5_np_full"),
-        ("conj", f"codegen-{model}_lamp_no_context_all_conj_fol_0_test_eval_constrained_bs_5_np_full")
-        ]
+    fol_models_and_paths  = defaultdict(list)
+    for model in ["codegen-350M", "codegen-2B", "codegen-6B", "codegen-16B"]:
+        for _type in ["scope", "revscope", "bound", "conj", "pp"]:
+            fol_models_and_paths[model].append((_type, f"{model}_lamp_no_context_all_{_type}_fol_0_test_eval_constrained_bs_5_np_full"))
+    for model in ['gpt-3.5-turbo']:
+        for _type in ["scope", "revscope", "bound", "conj", "pp"]:
+            fol_models_and_paths[model].append((_type, f"{model}_lamp_no_context_all_{_type}_fol_0_test_eval_unconstrained-api_bs_5_np_full"))
+            
 
-        big_metric_dict = ZeroshotDatasetMetric.from_bclamp_dirs(fol_models_and_paths, checkpoint_dir=CHECKPOINT_DIR, k=1, either=True, is_fol=True)
-        print(f"{model}: {big_metric_dict}")
+
+
+
+    metrics_by_k = {}
+    for k in range(2, 6):
+            
+        big_metric_dict = ZeroshotDatasetMetric.from_bclamp_dirs(fol_models_and_paths, checkpoint_dir=CHECKPOINT_DIR, k=k, either=False, is_fol=True)
+        metrics_by_k[k] = big_metric_dict
+
+
+    for k in metrics_by_k.keys():
+        print(f"K={k}")
+        for model, per_model_data in metrics_by_k[k].items():
+            print(f"\t{model}: {per_model_data}")

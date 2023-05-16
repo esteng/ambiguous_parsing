@@ -20,7 +20,7 @@ class FewshotDatasetMetric(DatasetMetric):
                 ratio: float, 
                 is_fol: bool = True):
 
-        scores_by_type = get_score_data(gold_data, pred_data, gold_data_lut=None, is_fol=is_fol, convert=False)
+        scores_by_type = get_score_data(gold_data, pred_data, test_data_lut=None, is_fol=is_fol, convert=False)
 
         for ex_type, data_dict in scores_by_type.items():
             for key, count in data_dict.items():
@@ -61,7 +61,7 @@ class FewshotDatasetMetric(DatasetMetric):
         metric = FewshotDatasetMetric()
         for model_name, path in models_and_paths:
             if checkpoint_dir is not None:
-                pred_path = CHECKPOINT_DIR / path
+                pred_path = checkpoint_dir / path
             else:
                 pred_path = Path(path)
 
@@ -73,7 +73,11 @@ class FewshotDatasetMetric(DatasetMetric):
                 pred_path = Path(pred_path)
                 # list the files alphabetically and take the last one
                 pred_files = sorted(pred_path.glob("*.jsonl"))
-                pred_file = pred_files[-1]
+                try:
+                    pred_file = pred_files[-1]
+                except IndexError:
+                    print(f"Skipping {model_name} because no jsonl file found")
+                    continue
 
             test_data = read_jsonl(fol_test_path)
             eval_data = read_jsonl(fol_eval_path)
@@ -84,12 +88,16 @@ class FewshotDatasetMetric(DatasetMetric):
             test_data_lut = defaultdict(dict)
             for datum in eval_data:
                 test_data_lut[datum['surface']][str(datum['template_idx'])] = datum
-            assert(len(test_data) == len(pred_data))
+            try:
+                assert(len(test_data) == len(pred_data))
+            except AssertionError:
+                print(f"Skipping {model_name} because pred and gold data are different lengths")
+                continue
 
             test_data = convert_benchclamp_gold(test_data, test_data_lut, is_fol=is_fol)
             pred_data = convert_benchclamp_pred(pred_data, is_fol=is_fol)
 
-            metric(pred_data, test_data, test_data_lut, ratio = ratio/100, is_fol=is_fol)
+            metric(pred_data, test_data, ratio = ratio/100, is_fol=is_fol)
 
         return metric.get_metric()
 
@@ -160,7 +168,7 @@ class FewshotInstanceMetric(InstanceMetric):
 
 
 if __name__ == "__main__":
-    fewshot = False
+    fewshot = True
 
     if fewshot:
         CHECKPOINT_DIR= Path("/brtx/602-nvme1/estengel/ambiguous_parsing/logs/1.0/") 
