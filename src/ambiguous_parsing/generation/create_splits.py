@@ -264,12 +264,13 @@ def rerender(lf, is_fol, ordered_vars):
     rendered = formula.render(ordered_vars) 
     return rendered
 
-def rerender_data(cfg, pairs):
-    for i, pair in enumerate(pairs):
-        # parse from text representation 
-        rendered = rerender(pair['lf'], cfg.is_fol, cfg.ordered_vars)
-        pairs[i]['lf'] = rendered
-    return pairs
+def rerender_data(cfg, all_pairs):
+    for j, pairs in enumerate(all_pairs):
+        for i, pair in enumerate(pairs):
+            # parse from text representation 
+            rendered = rerender(pair['lf'], cfg.is_fol, cfg.ordered_vars)
+            all_pairs[j][i]['lf'] = rendered
+    return all_pairs
 
 @hydra.main(config_path="", config_name="")
 def main(cfg: DictConfig):

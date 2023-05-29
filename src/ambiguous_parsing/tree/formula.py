@@ -123,7 +123,18 @@ class FOLFormula(Formula):
         statements = split_on_dot[-1]
 
         # parse statements 
-        statements = FOLFormula.parse_fol_statements(statements)
+        try:    
+            statements = FOLFormula.parse_fol_statements(statements)
+        except IndexError:
+            # singletons raise a shunting error 
+            is_singleton = re.match("\w+\([\w\d]+\)", statements)
+            assert(is_singleton)
+            statement_tree = nx.DiGraph()
+            statements = re.sub("\(", "[", statements)
+            statements = re.sub("\)", "]", statements)
+            statement_tree.add_node(0, name=statements)
+            statements = statement_tree
+            # pdb.set_trace()
         return cls(quantifiers, statements)
 
     @staticmethod 
@@ -234,8 +245,13 @@ class LispFormula(Formula):
         # get root of statement graph 
         children = [n2 for n1, n2 in statements.edges]
         roots = list(set([n1 for n1, n2 in statements.edges if n1 not in children])) 
-        assert(len(roots) == 1)
-        root = roots[0]
+        # roots are 0 for singleton 
+        assert(len(roots) == 1 or len(roots) == 0)
+        if len(roots) == 1:
+            root = roots[0]
+        else:
+            root = 0
+
         new_root = None
         # add quantifiers to graph starting at the top
         for i, q in enumerate(quantifiers):

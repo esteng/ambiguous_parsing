@@ -1,0 +1,99 @@
+sampler: "paired"
+out_dir: "TODO: override"
+is_fol: false
+ordered_vars: true
+canonicalize_train: true # dev and test are always canonicalized
+
+train: 
+  total: -1
+  perc_conj: 0.0
+  perc_conj_ambig: 0.00
+  perc_conj_unambig: 0.00
+  conj_ratio: 0.0
+
+  perc_pp: 0.0
+  perc_pp_ambig: 0.00
+  perc_pp_unambig: 0.00
+  pp_ratio: 0.0
+
+  
+  perc_bound: 0.0
+  perc_bound_ambig: 0.00
+  perc_bound_unambig: 0.00
+  bound_ratio: 0.0
+
+
+  perc_scope: 0.0
+  perc_scope_ambig: 0.00
+  perc_scope_unambig: 0.00
+  scope_ratio: 0.0
+
+  perc_revscope: 0.0
+  perc_revscope_ambig: 0.00
+  perc_revscope_unambig: 0.00
+  revscope_ratio: 0.0
+
+  perc_unambig: 1.0
+
+dev: 
+  # dev is all ambiguous Conj examples with only one interpretation attested 
+  total: 200.0
+
+  perc_conj: 0.0
+  perc_conj_ambig: 0.00
+  perc_conj_unambig: 0.0
+  conj_ratio: 0.0
+
+  perc_pp: 0.0
+  perc_pp_ambig: 0.00
+  perc_pp_unambig: 0.00
+  pp_ratio: 0.0
+
+  perc_bound: 0.0
+  perc_bound_ambig: 0.00
+  perc_bound_unambig: 0.00
+  bound_ratio: 0.0
+
+  perc_scope: 1.0
+  perc_scope_ambig: 1.00
+  perc_scope_unambig: 0.00
+  scope_ratio: 0.0
+
+  perc_revscope: 0.0
+  perc_revscope_ambig: 0.00
+  perc_revscope_unambig: 0.00
+  revscope_ratio: 0.0
+
+  perc_unambig: 0.0
+
+
+test: 
+  # test is all ambiguous conj examples with only one interpretation attested 
+  total: 200.0
+
+  perc_conj: 0.0
+  perc_conj_ambig: 0.00
+  perc_conj_unambig: 0.0
+  conj_ratio: 0.0 
+
+  perc_pp: 0.0
+  perc_pp_ambig: 0.00
+  perc_pp_unambig: 0.00
+  pp_ratio: 0.0
+
+  perc_bound: 0.0
+  perc_bound_ambig: 0.00
+  perc_bound_unambig: 0.00
+  bound_ratio: 0.0
+
+  perc_scope: 1.0
+  perc_scope_ambig: 1.00
+  perc_scope_unambig: 0.00
+  scope_ratio: 0.0
+
+  perc_revscope: 0.0
+  perc_revscope_ambig: 0.00
+  perc_revscope_unambig: 0.00
+  revscope_ratio: 0.0
+
+  perc_unambig: 0.0

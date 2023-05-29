@@ -55,7 +55,7 @@ def main(cfg: DictConfig):
     if cfg.canonicalize_train:
         (pp_pairs, unambiguous, unambig_instr, unambig_poss) = rerender_data(cfg, (pp_pairs, unambiguous, unambig_instr, unambig_poss)) 
         (conj_pairs, unambig_conj, unambig_double_conj) = rerender_data(cfg, (conj_pairs, unambig_conj, unambig_double_conj))
-
+        (unambig_quant, scope_pairs, revscope_pairs, bound_pairs) = rerender_data(cfg, (unambig_quant, scope_pairs, revscope_pairs, bound_pairs))
 
     amb_unamb_data_by_key = {"pp": (pp_pairs, []),
                              "conj": (conj_pairs, []),
