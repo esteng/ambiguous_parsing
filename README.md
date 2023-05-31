@@ -126,3 +126,7 @@ Currently, all templates are defined in `generation/generate_pairs.py`.
 Splits are created by `generation/create_splits.py` and `generation/create_fewshot_splits.py`.
 These files take a dataset config, which is a Hydra config file. 
 All configs are stored in `generation/data_configs/`. 
+
+## Parsing results 
+All parsing is handled by [this fork of BenchCLAMP](https://github.com/esteng/semantic_parsing_with_constrained_lm/tree/lamp).
+See the README there for more details. 
