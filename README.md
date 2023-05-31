@@ -14,6 +14,12 @@ More details about the ambiguity types can be found in the paper.
 Ambiguous parsing is tested in two settings: Zero-shot and few-shot. 
 These are described in more detail below. 
 
+### Note about data
+In an effort to prevent the data here from being used for future pre-training, we have released in in a compressed format. 
+**Please do not re-upload the data in a machine-readable format (e.g. .txt, .json, etc.).**
+We have specifically included all `.jsonl` files in the `.gitignore` so that they aren't accidentally committed to the repo. 
+To use the data locally, you can decompress it via `scripts/uncompress.sh`. 
+
 ### Data format 
 All data is stored in `jsonlines` format. 
 There are two data formats.
@@ -45,7 +51,7 @@ The model should ideally be able to recombine and modify the pieces of the promp
 For example, for PP attachment, the test sentence `the boy saw the man with the telescope` would have a prompt with LFs for `the boy saw the man`, `the boy saw with the telescope`, and `the man with the telescope`.
 Based on these inputs, the model should be able to parse the ambiguous test sentence two ways. 
 
-TODO: zip everything and put paths 
+Zero-shot data is in `data/zeroshot` 
 ### Few-shot setting
 In few-shot learning, the model receives direct examples of how to parse ambiguous sentences. 
 However, the prompt given contains a mixed set of examples (some LF0, some LF1). 
