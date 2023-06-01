@@ -17,6 +17,7 @@ These are described in more detail below.
 ### Note about data
 In an effort to prevent the data here from being used for future pre-training, we have released in in a compressed format. 
 **Please do not re-upload the data in a machine-readable format (e.g. .txt, .json, etc.).**
+**Note that the additional third clause of the license prohibits this**
 We have specifically included all `.jsonl` files in the `.gitignore` so that they aren't accidentally committed to the repo. 
 To use the data locally, you can decompress it via `scripts/uncompress.sh`. 
 
@@ -61,7 +62,7 @@ For example, the files in the `20-80` folder have prompts for each ambiguity typ
 
 Here, the model should capture the input percentage, i.e. a model tested on prompts from the `20-80` split should put about `p=0.2` on LF0 and produce LF0 about 20% of the time. 
 
-TODO: zip everything and put paths 
+Few-shot data is in `data/fewshot` 
 
 ### Grammars 
 Because the models used have not been finetuned on LAmP data, we use constrained decoding for locally-run models. 
