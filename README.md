@@ -1,6 +1,6 @@
 # LAmP: Linguistically Ambiguous Parsing
 
-This repo contains the code and data for this paper: [TODO](TODO). 
+This repo contains the code and data for this paper: [Zero and Few-shot Semantic Parsing with Ambiguous Inputs](https://esteng.github.io/assets/pdf/ambiguous_parsing_2023-6.pdf). 
 
 ## Dataset
 LAmP focuses on semantic parsing with ambiguous utterances. Currently, 5 ambiguity types are supported
